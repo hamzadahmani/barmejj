@@ -1,0 +1,70 @@
+import dynamicLinks from '@react-native-firebase/dynamic-links';
+export const Color = {
+  red: '#E74C3C',
+  main: '#45377A',
+};
+// Configure linking
+export const linking = {
+  prefixes: ['barmejApp://'],
+  config: {
+    screens: {
+      main: {
+        screens: {
+          Home: {
+            screens: {
+              Details: 'places/:id',
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export async function buildLink(params: string) {
+  const link = await dynamicLinks().buildShortLink(
+    {
+      link: `https://barmej.page.link/?link=https://barmej.page.link?${params}`,
+      // domainUriPrefix is created in your Firebase console
+      domainUriPrefix: 'https://barmej.page.link',
+      // optional setup which updates Firebase analytics campaign
+      // "banner". This also needs setting up before hand
+      android: {
+        packageName: 'com.barmej',
+      },
+    },
+
+    dynamicLinks.ShortLinkType.DEFAULT,
+  );
+  return link;
+}
+
+export function getQueryParams(url: string) {
+  const params: any = {};
+  const urlParts = url.split('?');
+
+  if (urlParts.length > 1) {
+    const queryString = urlParts[1];
+    const pairs = queryString.split('&');
+
+    for (const pair of pairs) {
+      const [key, value] = pair.split('=');
+      params[key] = decodeURIComponent(value || '');
+    }
+  }
+
+  return params;
+}
+
+export const formList = [
+  {name: 'firstName', placeholder: 'Prénom', type: 'text'},
+  {name: 'lastName', placeholder: 'Nom', type: 'text'},
+  {name: 'userMail', placeholder: 'Adresse e-mail', type: 'text'},
+  {name: 'userMobile', placeholder: 'Mobile number', type: 'text'},
+  {name: 'userPwd', placeholder: 'Mot de passe', type: 'password'},
+  {
+    name: 'confirmPassword',
+    placeholder: 'Confirme mot de passe',
+    type: 'password',
+  },
+];

@@ -1,0 +1,17 @@
+import * as React from 'react';
+import Svg, {SvgProps, G, Path, Defs} from 'react-native-svg';
+/* SVGR has dropped some elements not supported by react-native-svg: filter */
+const SvgNotifications = (props: SvgProps) => (
+  <Svg width={24} height={24} fill="none" {...props}>
+    <G filter="url(#a)">
+      <Path
+        fill="#fff"
+        fillRule="evenodd"
+        d="M12.704 3.695A.7.7 0 0 0 12 3a.7.7 0 0 0-.704.695v.274c-.421.048-.837.137-1.242.266-2.11.672-3.76 2.358-4.344 4.475l-.042.153a9.265 9.265 0 0 0-.225 3.882A2.75 2.75 0 0 0 4.25 15.01c0 1.314.938 2.447 2.244 2.708l.345.07a26.27 26.27 0 0 0 1.736.286c.005.024.01.047.017.07l.077.308a3.37 3.37 0 0 0 2.507 2.453 3.607 3.607 0 0 0 1.648 0 3.37 3.37 0 0 0 2.507-2.453l.077-.307.017-.07c.581-.077 1.16-.173 1.736-.288l.345-.069a2.773 2.773 0 0 0 2.244-2.708 2.75 2.75 0 0 0-1.193-2.264 9.29 9.29 0 0 0-.2-3.85l-.059-.22a6.413 6.413 0 0 0-4.23-4.433 6.5 6.5 0 0 0-1.364-.285v-.262Zm-1.202 15.857a1.972 1.972 0 0 1-1.435-1.326c1.287.095 2.58.095 3.866 0a1.972 1.972 0 0 1-1.435 1.326 2.176 2.176 0 0 1-.996 0Z"
+        clipRule="evenodd"
+      />
+    </G>
+    <Defs />
+  </Svg>
+);
+export default SvgNotifications;

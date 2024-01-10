@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "122310836320",
+    "project_id": "barmejapi",
+    "storage_bucket": "barmejapi.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122310836320:android:f666030289b0855a11c305",
+        "android_client_info": {
+          "package_name": "com.barmej"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "122310836320-9gl6rbog33f452lfra56f3ao6j7n6i7m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPqlOLi5rUkkc_qup336jzhcWmrTS_be0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "122310836320-9gl6rbog33f452lfra56f3ao6j7n6i7m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
