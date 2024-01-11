@@ -1,11 +1,11 @@
-import React, {useRef} from 'react';
-import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import {StyleSheet, View, Dimensions} from 'react-native';
+import React, { useRef } from 'react';
+import MapView, { PROVIDER_GOOGLE, PROVIDER_DEFAULT, Marker } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import useGeolocation from '../../hooks/useLocation';
-import CustomSwipeModal, {CustomSwipeModalRef} from '../swipeModal';
-import {Color} from '../../helpers/constatn';
-import {useQuery} from '@tanstack/react-query';
-import {getPlaceNearMeAPI} from '../../services/place';
+import CustomSwipeModal, { CustomSwipeModalRef } from '../swipeModal';
+import { Color } from '../../helpers/constatn';
+import { useQuery } from '@tanstack/react-query';
+import { getPlaceNearMeAPI } from '../../services/place';
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
@@ -20,10 +20,10 @@ const styles = StyleSheet.create({
   },
 });
 
-const MapScreen = ({navigation}: any) => {
-  const {position} = useGeolocation();
+const MapScreen = ({ navigation }: any) => {
+  const { position } = useGeolocation();
 
-  const {isLoading, data: ListMarker} = useQuery(
+  const { isLoading, data: ListMarker } = useQuery(
     [
       'getPlacesNearMe',
       {
@@ -44,7 +44,7 @@ const MapScreen = ({navigation}: any) => {
     {
       featureType: 'poi',
       elementType: 'labels',
-      stylers: [{visibility: 'off'}],
+      stylers: [{ visibility: 'off' }],
     },
   ];
 
@@ -59,7 +59,9 @@ const MapScreen = ({navigation}: any) => {
           showsUserLocation={true}
           showsMyLocationButton={true}
           followsUserLocation={true}
-          provider={PROVIDER_GOOGLE}
+          provider={
+            PROVIDER_GOOGLE
+          }
           loadingEnabled={true}
           loadingIndicatorColor={Color.main}
           tintColor={Color.main}
@@ -72,11 +74,11 @@ const MapScreen = ({navigation}: any) => {
             latitudeDelta: 0.015,
             longitudeDelta: 0.0121,
           }}>
-          {ListMarker.map(el => (
+          {ListMarker?.map(el => (
             <Marker
               onPress={() => modalRef.current?.showModal()}
               key={1}
-              coordinate={{latitude: el.latitude, longitude: el.longitude}}
+              coordinate={{ latitude: el.latitude, longitude: el.longitude }}
               title={el.placeName}
               pinColor={Color.main}
             />
@@ -86,7 +88,7 @@ const MapScreen = ({navigation}: any) => {
       <CustomSwipeModal
         ref={modalRef}
         navigation={navigation}
-        coordinate={{latitude: 36.7633107, longitude: 10.2003265}}
+        coordinate={{ latitude: 36.7633107, longitude: 10.2003265 }}
       />
     </View>
   );

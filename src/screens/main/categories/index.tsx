@@ -1,7 +1,7 @@
 import {useQuery} from '@tanstack/react-query';
 import {Image, ScrollView, View, Text, Box} from 'native-base';
 import React from 'react';
-import {ImageSourcePropType, StyleSheet, TouchableOpacity} from 'react-native';
+import {ImageSourcePropType, Platform, StyleSheet, TouchableOpacity} from 'react-native';
 import LoadingSpinner from '../../../components/Loader';
 import SearchBar from '../../../components/search';
 import {Color} from '../../../helpers/constatn';
@@ -91,7 +91,7 @@ export default function CategorieList({navigation}: any) {
                     }>
                     <View style={styles.imgBorder}>
                       <Image
-                        resizeMode="center"
+                        resizeMode= {Platform.OS ==="ios"?"contain":"center"}
                         alt={'gif'}
                         source={el?.categoryImage}
                         style={styles.gifPicture}

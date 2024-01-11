@@ -5,17 +5,18 @@
  * @format
  */
 
-import React, {useEffect} from 'react';
-import {NativeBaseProvider} from 'native-base';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import {NavigationContainer} from '@react-navigation/native';
+import React, { useEffect } from 'react';
+import { NativeBaseProvider } from 'native-base';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { NavigationContainer } from '@react-navigation/native';
 import MainStack from './src/routes/main';
 import AuthProvider from './src/routes/auth/authProvider';
-import {AxiosInterceptor} from './src/services/request';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import { AxiosInterceptor } from './src/services/request';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import usePushNotification from './src/hooks/usePushNotification';
-import {getQueryParams, linking} from './src/helpers/constatn';
+import { getQueryParams, linking } from './src/helpers/constatn';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
+import { SafeAreaView } from 'react-native';
 
 function App(): JSX.Element {
   const queryClient = new QueryClient({
@@ -82,13 +83,18 @@ function App(): JSX.Element {
       });
   }, []);
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <NativeBaseProvider>
             <NavigationContainer linking={linking}>
               <AxiosInterceptor>
-                <MainStack />
+                <SafeAreaView style={{
+                  flex: 1,
+                  backgroundColor: 'transparent',
+                }}>
+                  <MainStack />
+                </SafeAreaView>
               </AxiosInterceptor>
             </NavigationContainer>
           </NativeBaseProvider>
