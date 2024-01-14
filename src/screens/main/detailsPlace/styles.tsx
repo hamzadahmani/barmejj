@@ -68,7 +68,7 @@ export const StyledTimeOpen = styled(Text)`
 export const StyledTitle = styled(Text)`
   color: #000;
   font-family: Inter;
-  font-size: 15px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 600;
 `;

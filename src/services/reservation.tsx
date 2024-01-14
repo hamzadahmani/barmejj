@@ -18,10 +18,6 @@ export const addReservationAPI = async (data: any) => {
 };
 
 export const updateReservationAPI = async (data: any) => {
-  const response = await axios.put<any>(
-    `updateReservation/${data.idReservation}`,
-    data,
-    {},
-  );
+  const response = await axios.put<any>('updateReservation', data, {});
   return response.data;
 };

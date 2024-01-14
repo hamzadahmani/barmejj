@@ -3,11 +3,19 @@ import React, {useState} from 'react';
 import DatePicker, {getFormatedDate} from 'react-native-modern-datepicker';
 import {Color} from '../../helpers/constatn';
 
-export default function DatePickerForm({onChange, onBlur, value}: any) {
+export default function DatePickerForm({
+  onChange,
+  onBlur,
+  disabled = true,
+}: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
     getFormatedDate(new Date(), 'YYYY-MM-DD'),
   );
+
+  const opentPicker = () => {
+    setModalVisible(true);
+  };
   return (
     <>
       <Input
@@ -20,9 +28,12 @@ export default function DatePickerForm({onChange, onBlur, value}: any) {
           backgroundColor: 'rgba(241, 241, 254, 1)',
         }}
         placeholder={'date de naissance'}
-        onPressIn={() => setModalVisible(true)}
+        onPressIn={opentPicker}
         value={selectedDate?.toString()}
         onBlur={onBlur}
+        editable={false}
+        showSoftInputOnFocus={false}
+        isReadOnly={!disabled}
       />
       <Modal
         isOpen={modalVisible}

@@ -36,7 +36,6 @@ export default function UpadateResevationScreen({route}: any) {
   const [gustNumber, setGustNumber] = useState('');
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [modalVisible, setModalVisible] = React.useState(false);
-
   const [selectedTime, setSelectedTime] = useState('12:00');
 
   const startTime = new Date(0, 0, 0, 10, 0, 0); // 10:00 AM
@@ -50,6 +49,7 @@ export default function UpadateResevationScreen({route}: any) {
         setGustNumber(response.numberOfPersons.toString());
         setSelectedDate(response.reservationDate);
         setSelectedTime(response.reservationTime?.substring(0, 5));
+        setNote(response.message);
       },
     },
   );
@@ -66,7 +66,7 @@ export default function UpadateResevationScreen({route}: any) {
             return (
               <Toast
                 message={'votre profil a été mis à jour avec succès'}
-                status={'#e74c3c'}
+                status={Color.success}
               />
             );
           },
@@ -83,11 +83,12 @@ export default function UpadateResevationScreen({route}: any) {
       idPlace: reservationData.idPlace,
       idReservation: reservationData.idReservation,
       idUser: reservationData.idUser,
-      message: 'yala',
+      message: note,
       numberOfPersons: gustNumber,
       reservationDate: selectedDate,
       reservationTime: selectedTime,
     };
+    console.log('dataToSend update', dataToSend);
     updateReservationlMutate(dataToSend);
   };
 

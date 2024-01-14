@@ -4,7 +4,7 @@ import {AuthContext} from '../../routes/auth/authProvider';
 import {StyledUserName} from './styles';
 
 export default function UserDetails() {
-  const {userInfo} = useContext(AuthContext);
+  const {userInfo} = useContext(AuthContext) || {};
   console.log('userInfo', userInfo);
   return (
     <HStack>
@@ -18,7 +18,9 @@ export default function UserDetails() {
       />
       <Box paddingX={2}>
         <Text color={'#A1A7B0'}>Bonjour</Text>
-        <StyledUserName>{userInfo.userName ?? '-'}</StyledUserName>
+        <StyledUserName>
+          {`${userInfo?.firstName}  ${userInfo?.lastName}` ?? '-'}
+        </StyledUserName>
       </Box>
     </HStack>
   );

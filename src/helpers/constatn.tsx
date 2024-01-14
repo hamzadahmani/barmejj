@@ -2,6 +2,8 @@ import dynamicLinks from '@react-native-firebase/dynamic-links';
 export const Color = {
   red: '#E74C3C',
   main: '#45377A',
+  success: '#008000',
+  error: '#e74c3c',
 };
 // Configure linking
 export const linking = {

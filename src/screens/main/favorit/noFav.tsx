@@ -4,7 +4,7 @@ import SvgComponentAlert from '../../../assets/Alert';
 
 export default function NoFavorit() {
   return (
-    <Flex alignItems={'center'} justifyContent={'center'} flex={1}>
+    <Flex mt={5} alignItems={'center'} justifyContent={'center'} flex={1}>
       <View
         style={{
           borderRadius: 28,

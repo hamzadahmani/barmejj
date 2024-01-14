@@ -20,26 +20,11 @@ export function haversine(lat1: any, lon1: any, lat2: any, lon2: any) {
 }
 
 export function transformTime(inputTime: any) {
-  // Regular expression to validate input time in format 'hh:mm AM/PM'
-  const timeRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/i;
-
-  if (!timeRegex.test(inputTime)) {
-    // Return an error message or throw an exception if the input is not valid
-    return "Invalid input time format. Please use 'hh:mm AM/PM' format.";
-  }
-
-  // Split the input time string into hours, minutes, and AM/PM
-  const [time, ampm] = inputTime?.split(' ');
-  const [hours, minutes] = time?.split(':');
-
-  // Convert hours to 24-hour format if PM
-  let transformedHours = parseInt(hours, 10);
-  if (ampm.toUpperCase() === 'PM') {
-    transformedHours = (transformedHours % 12) + 12;
-  }
+  // Split the input time string into hours and minutes
+  const [hours, minutes] = inputTime?.split(':');
 
   // Format hours and minutes to ensure they have two digits
-  const formattedHours = String(transformedHours).padStart(2, '0');
+  const formattedHours = String(parseInt(hours, 10)).padStart(2, '0');
   const formattedMinutes = minutes.padStart(2, '0');
 
   // Combine the formatted values to get the desired time format '11:30:00'

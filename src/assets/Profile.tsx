@@ -17,8 +17,8 @@ const SvgProfile = (props: SvgProps) => (
     fill="none"
     {...props}>
     <G fill="#fff" clipPath="url(#a)" filter="url(#b)">
-      <Circle cx={16.25} cy={6.5} r={4} />
-      <Ellipse cx={16.25} cy={17.5} rx={7} ry={4} />
+      <Circle cx={12} cy={6.5} r={4} />
+      <Ellipse cx={12} cy={17.5} rx={7} ry={4} />
     </G>
     <Defs>
       <ClipPath id="a">

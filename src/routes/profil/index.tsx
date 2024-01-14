@@ -3,6 +3,7 @@ import MyReservation from '../../screens/main/myReservations';
 import UpadateResevationScreen from '../../screens/main/myReservations/updateReservation';
 import Profil from '../../screens/main/profil';
 import React from 'react';
+import SettingsScreen from '../../screens/main/profil/settings';
 const Stack = createStackNavigator();
 
 export default function StackProfil() {
@@ -34,6 +35,16 @@ export default function StackProfil() {
         component={UpadateResevationScreen}
         options={{
           headerTitle: 'Mise a jour réservation',
+        }}
+      />
+      <Stack.Screen
+        name="MySettings"
+        component={SettingsScreen}
+        options={{
+          headerTitle: 'Paramètres',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
         }}
       />
     </Stack.Navigator>

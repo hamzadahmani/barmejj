@@ -32,13 +32,15 @@ import LoadingSpinner from '../../../components/Loader';
 import Toast from '../../../components/toast';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import DatePickerForm from '../../../components/form/DatePicker';
 type EnumInputs =
   | 'firstName'
   | 'lastName'
   | 'userMobile'
   | 'userMail'
   | 'userGender'
-  | 'userPhoto';
+  | 'userPhoto'
+  | 'dateOfBirth';
 const schema = yup
   .object({
     firstName: yup.string().required('Champ obligatoire'),
@@ -47,6 +49,7 @@ const schema = yup
     userMobile: yup.string().required('Champ obligatoire'),
     userGender: yup.string().required('Champ obligatoire'),
     userPhoto: yup.string(),
+    dateOfBirth: yup.string().required('Champ obligatoire'),
   })
   .required();
 export default function Profil({navigation}: any) {
@@ -69,6 +72,7 @@ export default function Profil({navigation}: any) {
       userMobile: '',
       userGender: '',
       userPhoto: '',
+      dateOfBirth: '',
     },
   });
 
@@ -162,7 +166,9 @@ export default function Profil({navigation}: any) {
           <Text fontSize={16} fontFamily={'Inter'} fontWeight={500}>
             Profile
           </Text>
-          <SvgSettings />
+          <Pressable onPress={() => navigation.navigate('MySettings')}>
+            <SvgSettings />
+          </Pressable>
         </Box>
         <Flex justifyContent={'center'} alignItems={'center'}>
           <View style={{position: 'relative'}}>
@@ -243,42 +249,75 @@ export default function Profil({navigation}: any) {
             <ChevronRightIcon />
           </Box>
         </Pressable>
-        <Flex gap={5} mt={2}>
-          {formList.map((el, _) => (
-            <Controller
-              key={el.name}
-              control={control}
-              render={({field: {onChange, onBlur, value}}) => (
-                <FormControl
-                  isInvalid={!!errors?.[el.name as EnumInputs]?.message}>
-                  <Input
-                    type={'text'}
-                    backgroundColor={'#F9F9F9'}
-                    borderColor={'#F9F9F9'}
-                    borderRadius={'10px'}
-                    _focus={{
-                      borderColor: Color.main,
-                      backgroundColor: 'rgba(241, 241, 254, 1)',
-                    }}
-                    onChangeText={onChange}
-                    value={value?.toString()}
-                    onBlur={onBlur}
-                    isReadOnly={!editMode}
-                  />
-                  <FormControl.ErrorMessage
-                    leftIcon={<WarningOutlineIcon size="xs" />}>
-                    {errors?.[el.name as EnumInputs]?.message}
-                  </FormControl.ErrorMessage>
-                </FormControl>
-              )}
-              name={el.name as EnumInputs}
-            />
-          ))}
+        <Flex gap={3} mt={2}>
+          {formList.map(
+            (el, _) =>
+              el.name !== 'confirmPassword' &&
+              el.name !== 'userPwd' && (
+                <Controller
+                  key={el.name}
+                  control={control}
+                  render={({field: {onChange, onBlur, value}}) => (
+                    <FormControl
+                      isInvalid={!!errors?.[el.name as EnumInputs]?.message}>
+                      <Text bold mb={2}>
+                        {el.placeholder} :
+                      </Text>
+
+                      <Input
+                        type={'text'}
+                        backgroundColor={'#F9F9F9'}
+                        borderColor={'#F9F9F9'}
+                        borderRadius={'10px'}
+                        _focus={{
+                          borderColor: Color.main,
+                          backgroundColor: 'rgba(241, 241, 254, 1)',
+                        }}
+                        onChangeText={onChange}
+                        value={value?.toString()}
+                        onBlur={onBlur}
+                        isReadOnly={!editMode}
+                      />
+                      <FormControl.ErrorMessage
+                        leftIcon={<WarningOutlineIcon size="xs" />}>
+                        {errors?.[el.name as EnumInputs]?.message}
+                      </FormControl.ErrorMessage>
+                    </FormControl>
+                  )}
+                  name={el.name as EnumInputs}
+                />
+              ),
+          )}
+          <Controller
+            key={'dateOfBirth'}
+            control={control}
+            render={({field: {onChange, onBlur, value}}) => (
+              <FormControl isInvalid={!!errors?.dateOfBirth?.message}>
+                <Text bold mb={2}>
+                  {'Date de naissance'} :
+                </Text>
+                <DatePickerForm
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  value={value}
+                  disable={!editMode}
+                />
+                <FormControl.ErrorMessage
+                  leftIcon={<WarningOutlineIcon size="xs" />}>
+                  {errors?.dateOfBirth?.message}
+                </FormControl.ErrorMessage>
+              </FormControl>
+            )}
+            name={'dateOfBirth' as EnumInputs}
+          />
 
           <Controller
             control={control}
             render={({field: {onChange, value}}) => (
               <FormControl isInvalid={!!errors?.userGender?.message}>
+                <Text bold mb={2}>
+                  {'Genre'} :
+                </Text>
                 {editMode ? (
                   <Select
                     backgroundColor={'#F9F9F9'}

@@ -39,10 +39,11 @@ import LoadingSpinner from '../../../components/Loader';
 import {getPlaceByIdAPI} from '../../../services/place';
 import Geolocation from '@react-native-community/geolocation';
 import {haversine, isTimeWithinRange} from '../../../helpers/functions';
+import MapPlaceLocation from './mapLocation';
+import ReportModal from '../../../components/reportModal';
 
 export default function PlaceDetails({navigation, route}: any) {
   const {id} = route.params;
-  console.log('id', id);
   const [favorit, setFavorit] = useState(false);
   const scrollViewRef = useRef(null);
 
@@ -151,6 +152,16 @@ export default function PlaceDetails({navigation, route}: any) {
     } catch (error: any) {
       console.error('Error sharing:', error?.message);
     }
+  };
+
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
+
+  const handleReportSubmit = reportText => {
+    // Handle the report submission logic (e.g., send it to a server)
+    console.log('Report submitted:', reportText);
   };
   return (
     <ScrollView
@@ -309,10 +320,16 @@ export default function PlaceDetails({navigation, route}: any) {
           <StyledTime>{data?.placeinfo?.placeHappyHour ?? '-'}</StyledTime>
         </Center>
       </Flex>
-      <Box>
-        <StyledTitle py={5}>Maps</StyledTitle>
-        <StyledTitle py={5}>Coming Soon</StyledTitle>
-      </Box>
+
+      {data?.place.latitude && (
+        <Box borderRadius={100}>
+          <MapPlaceLocation
+            latitude={data?.place?.latitude}
+            longitude={data?.place?.longitude}
+            placeName={data?.place?.placeName ?? '-'}
+          />
+        </Box>
+      )}
       <Box bgColor={'#fff'} mt={2} borderRadius={10} py={'12px'} px={'17px'}>
         <StyledTitle>Horaires</StyledTitle>
         <StyledTimeOpen>{data?.placeinfo?.horaire}</StyledTimeOpen>
@@ -324,7 +341,7 @@ export default function PlaceDetails({navigation, route}: any) {
         <StyledTimeOpen>{data?.placeinfo?.placeFavorableHour}</StyledTimeOpen>
       </Box>
       <Box bgColor={'#fff'} mt={2} borderRadius={10} py={'12px'} px={'17px'}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={openModal}>
           <Flex flexDirection={'row'} alignItems={'center'} gap={2}>
             <SvgReport />
             <StyledTitle>Signaler un problème</StyledTitle>
@@ -344,6 +361,12 @@ export default function PlaceDetails({navigation, route}: any) {
         imageIndex={0}
         visible={visible}
         onRequestClose={() => setIsVisible(false)}
+      />
+      <ReportModal
+        isOpen={modalVisible}
+        onClose={closeModal}
+        onSubmit={handleReportSubmit}
+        placeID={id}
       />
     </ScrollView>
   );

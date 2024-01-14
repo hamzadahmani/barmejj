@@ -15,6 +15,7 @@ import SvgComponentTrash from '../../../assets/Delete';
 import LoadingSpinner from '../../../components/Loader';
 import Toast from '../../../components/toast';
 import {deleteFavoritesAPI, getFavoritesAPI} from '../../../services/favorites';
+import NoFavorit from './noFav';
 // import NoFavit from './noFav';
 
 export default function MyFavorit({navigation}: any) {
@@ -25,6 +26,7 @@ export default function MyFavorit({navigation}: any) {
     getFavoritesAPI,
     {},
   );
+  console.log('my data', data);
   const {mutate: deleteFavoritesMutate} = useMutation(
     (id: any) => deleteFavoritesAPI(id),
     {
@@ -112,6 +114,7 @@ export default function MyFavorit({navigation}: any) {
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         ItemSeparatorComponent={<Divider backgroundColor={'#F6F7F9'} />}
+        ListEmptyComponent={<NoFavorit />}
       />
     </View>
   );

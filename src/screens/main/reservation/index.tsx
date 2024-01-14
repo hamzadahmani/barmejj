@@ -118,7 +118,7 @@ export default function Resevation({route, navigation}: any) {
       numberOfPersons: Number(gustNumber),
       message: note,
     };
-
+    console.log('reservation', dataToSend);
     reservationMutate(dataToSend);
   };
   return (

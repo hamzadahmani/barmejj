@@ -1,19 +1,15 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-native/no-inline-styles */
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View } from 'native-base';
-import React, { useEffect, useState } from 'react';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {View} from 'native-base';
+import React, {useEffect, useState} from 'react';
 import StackHome from './homeStack';
 import SvgHome from '../../assets/Home';
-import SvgSelectedHome from '../../assets/SelectedHome';
 import SvgNotifications from '../../assets/Notifications';
-import SvgSelectedNotifications from '../../assets/SelectedNotifications';
 import SvgHeart from '../../assets/Heart';
-import SvgSelectedProfile from '../../assets/SelectedProfile';
 import SvgProfile from '../../assets/Profile';
-import SvgSelectedFavoris from '../../assets/SelectedFavoris';
 import Favorit from '../../screens/main/favorit';
-import { Keyboard, Text } from 'react-native';
+import {Keyboard} from 'react-native';
 import StackProfil from '../profil';
 import NotficationScreen from '../../screens/notfication';
 export default function TabNavigation() {
@@ -41,97 +37,140 @@ export default function TabNavigation() {
     };
   }, []);
   return (
-    <View
-      style={{
+    <Tab.Navigator
+      id="tabs"
+      screenOptions={({}) => ({
+        tabBarActiveTintColor: 'tomato',
+        tabBarInactiveTintColor: 'gray',
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          position: 'absolute',
+          marginHorizontal: 25,
+          bottom: 20,
+          display: keyboardVisible ? 'none' : 'flex',
+          backgroundColor: '#45377A',
+          borderRadius: 15,
+          height: 72,
+          borderTopColor: '#45377A',
+        },
+      })}
+      sceneContainerStyle={{
         flex: 1,
+        backgroundColor: 'transparent',
       }}>
-      <Tab.Navigator
-        id="tabs"
-        screenOptions={({ }) => ({
-          tabBarActiveTintColor: 'tomato',
-          tabBarInactiveTintColor: 'gray',
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarStyle: {
-            marginHorizontal: 25,
-            bottom: 20,
-            display: keyboardVisible ? 'none' : 'flex',
-            backgroundColor: '#45377A',
-            borderRadius: 15,
-            height: 72,
-            borderTopColor: '#45377A',
-          },
+      <Tab.Screen
+        name="Home"
+        component={StackHome}
+        options={({}) => ({
+          tabBarLabel: 'Home',
+          tabBarIcon: ({focused}) => (
+            <View
+              style={{
+                flexGrow: 1,
+                justifyContent: focused ? 'space-between' : 'flex-end',
+                paddingVertical: 10,
+              }}>
+              {focused && (
+                <View
+                  style={{
+                    height: 6,
+                    width: 6,
+                    borderRadius: 6,
+                    backgroundColor: 'white',
+                    alignSelf: 'center',
+                  }}
+                />
+              )}
+              <SvgHome />
+            </View>
+          ),
         })}
-        sceneContainerStyle={{
-          flex: 1,
-          backgroundColor: 'transparent',
-        }}>
-        <Tab.Screen
-          name="Home"
-          component={StackHome}
-          options={({ }) => ({
-            tabBarLabel: 'Home',
-            tabBarIcon: ({ focused }) =>
-              focused ? (
-                <View>
-                  <View style={{ height: 10, width: 10, borderRadius: 10, backgroundColor: 'white',alignSelf:'center' }}></View>
-                  <View style={{ flex: 1, backgroundColor: 'red',  justifyContent: "flex-end" }}>
-                    <SvgHome />
-                  </View>
-                </View>
-              ) : (
-                <View style={{ flex: 1, backgroundColor: 'green',  justifyContent: "flex-end" }}>
-                  <SvgHome />
-                </View>
-              ),
-          })}
-        />
-        <Tab.Screen
-          name="Favorit"
-          component={Favorit}
-          options={{
-            tabBarLabel: 'Favorit',
-            tabBarIcon: ({ focused }) =>
-              focused ? (
-                <SvgSelectedFavoris />
-              ) : (
-                <View flex={1} justifyContent="flex-end" paddingBottom={2.5}>
-                  <SvgHeart />
-                </View>
-              ),
-          }}
-        />
-        <Tab.Screen
-          name="Notifcation"
-          component={NotficationScreen}
-          options={{
-            tabBarLabel: 'Home',
-            tabBarIcon: ({ focused }) =>
-              focused ? (
-                <SvgSelectedNotifications />
-              ) : (
-                <View flex={1} justifyContent="flex-end" paddingBottom={2.5}>
-                  <SvgNotifications />
-                </View>
-              ),
-          }}
-        />
-        <Tab.Screen
-          name="Profile"
-          component={StackProfil}
-          options={{
-            tabBarLabel: 'Profile',
-            tabBarIcon: ({ focused }) =>
-              focused ? (
-                <SvgSelectedProfile />
-              ) : (
-                <View flex={1} justifyContent="flex-end" paddingBottom={2.5}>
-                  <SvgProfile />
-                </View>
-              ),
-          }}
-        />
-      </Tab.Navigator>
-    </View>
+      />
+      <Tab.Screen
+        name="Favorit"
+        component={Favorit}
+        options={{
+          tabBarLabel: 'Favorit',
+          tabBarIcon: ({focused}) => (
+            <View
+              style={{
+                flexGrow: 1,
+                justifyContent: focused ? 'space-between' : 'flex-end',
+                paddingVertical: 10,
+              }}>
+              {focused && (
+                <View
+                  style={{
+                    height: 6,
+                    width: 6,
+                    borderRadius: 6,
+                    backgroundColor: 'white',
+                    alignSelf: 'center',
+                  }}
+                />
+              )}
+              <SvgHeart />
+            </View>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Notifcation"
+        component={NotficationScreen}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({focused}) => (
+            <View
+              style={{
+                flexGrow: 1,
+                justifyContent: focused ? 'space-between' : 'flex-end',
+                paddingVertical: 10,
+              }}>
+              {focused && (
+                <View
+                  style={{
+                    height: 6,
+                    width: 6,
+                    borderRadius: 6,
+                    backgroundColor: 'white',
+                    alignSelf: 'center',
+                  }}
+                />
+              )}
+              <SvgNotifications />
+            </View>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={StackProfil}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({focused}) => (
+            <View
+              style={{
+                flexGrow: 1,
+                justifyContent: focused ? 'space-between' : 'flex-end',
+                paddingVertical: 10,
+              }}>
+              {focused && (
+                <View
+                  style={{
+                    height: 6,
+                    width: 6,
+                    borderRadius: 6,
+                    backgroundColor: 'white',
+                    alignSelf: 'center',
+                  }}
+                />
+              )}
+              <SvgProfile />
+            </View>
+          ),
+        }}
+      />
+    </Tab.Navigator>
   );
 }

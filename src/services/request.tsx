@@ -24,6 +24,7 @@ const AxiosInterceptor = ({children}: any) => {
   /*                                   REQUEST                                  */
   /* -------------------------------------------------------------------------- */
   instance.interceptors.request.use(config => {
+    config.timeout = 5000; // Wait for 5 seconds before timing out
     if (
       !config?.headers?.Authorization &&
       accessToken &&
