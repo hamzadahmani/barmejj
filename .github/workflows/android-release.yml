@@ -53,7 +53,9 @@ jobs:
         run: sdkmanager "ndk;27.1.12297006"
 
       - name: Install JavaScript dependencies
-        run: npm ci
+        # React Query 4 fonctionne dans l'application mais sa déclaration de
+        # peer dependency ne mentionne pas encore React 19.
+        run: npm ci --legacy-peer-deps
 
       - name: Select online Render API
         run: npm run api:online
