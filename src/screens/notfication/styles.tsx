@@ -1,74 +1,10 @@
-import {Text} from 'react-native';
-import styled from 'styled-components/native';
+import {createStyledText} from '../../components/StyledText';
 
-export const StyledStatus = styled(Text)`
-  width: 99px;
-  padding: 10px;
-  text-align: center;
-  border-radius: 10px;
-  background: #fed7aa;
-`;
-
-export const StyledReservationTitle = styled(Text)`
-  color: #45377a;
-  font-family: Inter;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 18px;
-`;
-
-export const StyledHappyHour = styled(Text)`
-  font-family: Inter;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  color: #ec8052;
-`;
-
-export const StyledTime = styled(Text)`
-  font-family: Poppins;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  color: #755dcd;
-`;
-
-export const PlaceName = styled(Text)`
-  font-family: Inter;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 28px;
-  color: #000;
-`;
-
-export const StyledTitle = styled(Text)`
-  color: #464646;
-  font-family: Inter;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px;
-  text-align: center;
-  padding: 24px;
-`;
-
-export const StyledNoDataTitle = styled(Text)`
-  color: #101828;
-  text-align: center;
-  font-family: Poppins;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px; /* 150% */
-`;
-export const StyledNoDataSubTitle = styled(Text)`
-  color: #667085;
-  text-align: center;
-  font-family: Poppins;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px; /* 142.857% */
-`;
+export const StyledStatus = createStyledText({width: 99, padding: 10, textAlign: 'center', borderRadius: 10, backgroundColor: '#FED7AA'});
+export const StyledReservationTitle = createStyledText({color: '#45377A', fontFamily: 'Inter', fontSize: 16, fontWeight: '500', lineHeight: 18});
+export const StyledHappyHour = createStyledText({fontFamily: 'Inter', fontSize: 16, fontWeight: '500', color: '#EC8052'});
+export const StyledTime = createStyledText({fontFamily: 'Poppins', fontSize: 14, fontWeight: '400', color: '#755DCD'});
+export const PlaceName = createStyledText({fontFamily: 'Inter', fontSize: 18, fontWeight: '500', lineHeight: 28, color: '#000000'});
+export const StyledTitle = createStyledText({color: '#19152A', fontFamily: 'Inter', fontSize: 30, fontWeight: '800', lineHeight: 38, textAlign: 'left', paddingTop: 32, paddingHorizontal: 20, paddingBottom: 12});
+export const StyledNoDataTitle = createStyledText({color: '#101828', textAlign: 'center', fontFamily: 'Poppins', fontSize: 16, fontWeight: '500', lineHeight: 24});
+export const StyledNoDataSubTitle = createStyledText({color: '#667085', textAlign: 'center', fontFamily: 'Poppins', fontSize: 14, fontWeight: '400', lineHeight: 20});

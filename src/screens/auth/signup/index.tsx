@@ -9,19 +9,20 @@ import {
   Select,
   CheckIcon,
   useToast,
+  HStack,
+  Checkbox,
 } from 'native-base';
-import React from 'react';
+import React, {useState} from 'react';
 import {useForm, Controller} from 'react-hook-form';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Color, formList} from '../../../helpers/constatn';
-import {Keyboard, Pressable} from 'react-native';
+import {Keyboard, Pressable, ScrollView} from 'react-native';
 
 import {useMutation} from '@tanstack/react-query';
 import {signUpAPI} from '../../../services/auth';
 import LoadingSpinner from '../../../components/Loader';
 import DatePickerForm from '../../../components/form/DatePicker';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scrollview';
 import Toast from '../../../components/toast';
 
 type EnumInputs =
@@ -31,7 +32,18 @@ type EnumInputs =
   | 'userMail'
   | 'userGender'
   | 'userPhoto'
-  | 'dateOfBirth';
+  | 'dateOfBirth'
+  | 'userPwd'
+  | 'confirmPassword';
+
+const fieldLabels: Record<string, string> = {
+  firstName: 'Prénom',
+  lastName: 'Nom',
+  userMail: 'Adresse e-mail',
+  userMobile: 'Numéro de téléphone',
+  userPwd: 'Mot de passe',
+  confirmPassword: 'Confirmation du mot de passe',
+};
 
 const schema = yup
   .object({
@@ -59,10 +71,7 @@ const schema = yup
     confirmPassword: yup
       .string()
       .required('Champ obligatoire')
-      .oneOf(
-        [yup.ref('userPwd'), null],
-        'Les mots de passe doivent correspondre',
-      ),
+      .oneOf([yup.ref('userPwd')], 'Les mots de passe doivent correspondre'),
     dateOfBirth: yup
       .string()
       .required('Champ obligatoire')
@@ -77,7 +86,11 @@ const schema = yup
 
 export default function SignupScreen({navigation}: any) {
   const toast = useToast();
-
+  const [policyCheck, setPolicyCheck] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    userPwd: false,
+    confirmPassword: false,
+  });
   const {
     control,
     handleSubmit,
@@ -92,6 +105,8 @@ export default function SignupScreen({navigation}: any) {
       userGender: '',
       userPhoto: '',
       dateOfBirth: '',
+      userPwd: '',
+      confirmPassword: '',
     },
   });
   const {mutate: siginUpMutate, isLoading} = useMutation(
@@ -119,49 +134,119 @@ export default function SignupScreen({navigation}: any) {
 
   const onSubmit = (data: any) => {
     Keyboard.dismiss();
-    const {confirmPassword, ...rest} = data;
-    console.log('confirmPassword', confirmPassword);
+    const rest = {...data};
+    delete rest.confirmPassword;
     siginUpMutate({
       ...rest,
       userName: data.firstName,
       userRole: 'user',
     });
   };
-  return (
-    <KeyboardAwareScrollView>
-      {<LoadingSpinner visible={isLoading} />}
-      <Flex px={5} pt={6}>
-        <Box>
-          <Text fontFamily={'Inter'} fontWeight={700} fontSize={28}>
-            S’inscrire
-          </Text>
-          <Text
-            fontFamily={'Inter'}
-            fontWeight={400}
-            fontSize={16}
-            color={'#7D808D'}>
-            Créez votre compte
-          </Text>
-        </Box>
 
-        <Flex gap={5} mt={2}>
+  const handleCheckboxChange = () => {
+    setPolicyCheck(!policyCheck);
+  };
+
+  return (
+    <ScrollView
+      style={{backgroundColor: Color.background}}
+      contentContainerStyle={{paddingBottom: 24}}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
+      {<LoadingSpinner visible={isLoading} />}
+      <Box
+        bg={Color.main}
+        px={6}
+        pt={10}
+        pb={10}
+        borderBottomLeftRadius={36}
+        borderBottomRightRadius={36}>
+        <Pressable onPress={() => navigation.goBack()}>
+          <Text color="#DCD5F2" fontSize={13} fontWeight={700}>
+            ‹ Retour
+          </Text>
+        </Pressable>
+        <Text color="white" fontWeight={800} fontSize={30} mt={5}>
+          Créez votre compte
+        </Text>
+        <Text fontSize={14} color="#DCD5F2" mt={2} lineHeight={21}>
+          Réservez vos meilleures adresses en quelques secondes.
+        </Text>
+      </Box>
+      <Flex px={5} mt={-5}>
+        <Flex bg="white" p={5} borderRadius={24} shadow={2}>
+          <Text color={Color.text} fontSize={18} fontWeight={800} mb={1}>
+            Vos informations
+          </Text>
+          <Text color={Color.muted} fontSize={12} mb={5}>
+            Tous les champs sont nécessaires pour créer votre compte.
+          </Text>
           {formList.map((el, _) => (
             <Controller
               key={el.name}
               control={control}
               render={({field: {onChange, onBlur, value}}) => (
                 <FormControl
+                  mb={3}
                   isInvalid={!!errors?.[el.name as EnumInputs]?.message}>
+                  <FormControl.Label>
+                    {fieldLabels[el.name] || el.placeholder}
+                  </FormControl.Label>
                   <Input
-                    type={(el?.type as 'text' | 'password') ?? 'text'}
-                    backgroundColor={'#F9F9F9'}
-                    borderColor={'#F9F9F9'}
-                    borderRadius={'10px'}
+                    type={
+                      el.type === 'password' &&
+                      !visiblePasswords[
+                        el.name as 'userPwd' | 'confirmPassword'
+                      ]
+                        ? 'password'
+                        : 'text'
+                    }
+                    height={50}
+                    backgroundColor={Color.background}
+                    borderColor={Color.border}
+                    borderRadius={14}
                     _focus={{
                       borderColor: Color.main,
                       backgroundColor: 'rgba(241, 241, 254, 1)',
                     }}
                     placeholder={el.placeholder}
+                    keyboardType={
+                      el.name === 'userMail'
+                        ? 'email-address'
+                        : el.name === 'userMobile'
+                        ? 'phone-pad'
+                        : 'default'
+                    }
+                    autoCapitalize={
+                      el.name === 'userMail' ? 'none' : 'sentences'
+                    }
+                    autoCorrect={false}
+                    InputRightElement={
+                      el.type === 'password' ? (
+                        <Pressable
+                          onPress={() =>
+                            setVisiblePasswords(current => ({
+                              ...current,
+                              [el.name]:
+                                !current[
+                                  el.name as 'userPwd' | 'confirmPassword'
+                                ],
+                            }))
+                          }>
+                          <Text
+                            color={Color.main}
+                            fontSize={10}
+                            fontWeight={700}
+                            mr={4}>
+                            {visiblePasswords[
+                              el.name as 'userPwd' | 'confirmPassword'
+                            ]
+                              ? 'MASQUER'
+                              : 'AFFICHER'}
+                          </Text>
+                        </Pressable>
+                      ) : undefined
+                    }
                     onChangeText={onChange}
                     value={value?.toString()}
                     onBlur={onBlur}
@@ -181,6 +266,7 @@ export default function SignupScreen({navigation}: any) {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <FormControl isInvalid={!!errors?.dateOfBirth?.message}>
+                <FormControl.Label>Date de naissance</FormControl.Label>
                 <DatePickerForm
                   onChange={onChange}
                   onBlur={onBlur}
@@ -197,11 +283,16 @@ export default function SignupScreen({navigation}: any) {
           <Controller
             control={control}
             render={({field: {onChange, value}}) => (
-              <FormControl isInvalid={!!errors?.userGender?.message} isReadOnly>
+              <FormControl
+                isInvalid={!!errors?.userGender?.message}
+                isReadOnly
+                mt={3}>
+                <FormControl.Label>Genre</FormControl.Label>
                 <Select
-                  backgroundColor={'#F9F9F9'}
-                  borderColor={'#F9F9F9'}
-                  borderRadius={'10px'}
+                  height={50}
+                  backgroundColor={Color.background}
+                  borderColor={Color.border}
+                  borderRadius={14}
                   selectedValue={value}
                   minWidth="200"
                   accessibilityLabel="Genre"
@@ -225,13 +316,29 @@ export default function SignupScreen({navigation}: any) {
             name={'userGender'}
           />
         </Flex>
+        <HStack space={3} mt={5} px={1} alignItems="flex-start">
+          <Checkbox
+            shadow={2}
+            value={'policyCheck'}
+            colorScheme="purple"
+            accessibilityLabel="Accepter les conditions d’utilisation"
+            isChecked={policyCheck}
+            onChange={handleCheckboxChange}>
+            <Text color={Color.muted} fontSize={12} lineHeight={18}>
+              J’accepte les conditions d’utilisation et la politique de
+              confidentialité.
+            </Text>
+          </Checkbox>
+        </HStack>
 
         <Box mt={5}>
           <Button
-            borderRadius={'10px'}
+            height={52}
+            borderRadius={16}
             backgroundColor={Color.main}
-            onPress={handleSubmit(onSubmit)}>
-            S’inscrire
+            isDisabled={!policyCheck || isLoading}
+            onPress={() => void handleSubmit(onSubmit)()}>
+            Créer mon compte
           </Button>
           <Box flexDirection={'row'} mt={4} mb={5} justifyContent={'center'}>
             <Text
@@ -239,7 +346,7 @@ export default function SignupScreen({navigation}: any) {
               fontWeight={400}
               fontSize={14}
               color={'#6D6D6D'}>
-              Vous avez deja un compte ?
+              Vous avez déjà un compte ?
             </Text>
             <Pressable onPress={() => navigation.goBack()}>
               <Text
@@ -247,13 +354,13 @@ export default function SignupScreen({navigation}: any) {
                 fontFamily={'Inter'}
                 fontWeight={500}
                 fontSize={14}
-                color={'#000'}>
-                se connecter
+                color={Color.main}>
+                Se connecter
               </Text>
             </Pressable>
           </Box>
         </Box>
       </Flex>
-    </KeyboardAwareScrollView>
+    </ScrollView>
   );
 }

@@ -1,34 +1,6 @@
-import {Text} from 'native-base';
-import styled from 'styled-components/native';
+import {createStyledText} from '../StyledText';
 
-export const imageBg = {
-  backgroundImage: 'url("https://wallpaperaccess.com/full/317501.jpg)',
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-};
-export const StyledTitle = styled(Text)`
-  font-family: 'Manrope';
-  font-style: normal;
-  font-weight: 700;
-  font-size: 18px;
-  line-height: 24px;
-  color: #464646;
-`;
-export const StyledSubTitle = styled(Text)`
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 10px;
-  line-height: 12px;
-`;
-export const StyledStatus = styled(Text)`
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 10px;
-  line-height: 12px;
-  color: white;
-  width: 50px;
-  padding: 2px 8px;
-  border-radius: 4px;
-`;
+export const imageBg = {};
+export const StyledTitle = createStyledText({fontFamily: 'Manrope', fontWeight: '700', fontSize: 19, lineHeight: 25, color: '#19152A'});
+export const StyledSubTitle = createStyledText({fontFamily: 'Inter', fontWeight: '500', fontSize: 12, lineHeight: 18, color: '#777382'});
+export const StyledStatus = createStyledText({fontFamily: 'Inter', fontWeight: '500', fontSize: 10, lineHeight: 12, color: '#FFFFFF', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 20});

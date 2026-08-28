@@ -8,8 +8,9 @@ import Svg, {
   ClipPath,
   Pattern,
   Use,
-  Image,
+  Image as SvgImage,
 } from 'react-native-svg';
+const Image = SvgImage as any;
 const SvgComponentFB = (props: SvgProps) => (
   <Svg
     xmlnsXlink="http://www.w3.org/1999/xlink"

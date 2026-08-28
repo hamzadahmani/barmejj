@@ -1,0 +1,8 @@
+<resources>
+    <style name="AppTheme.Starting" parent="AppTheme">
+        <item name="android:windowSplashScreenBackground">@color/barmej_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/barmej_splash_background</item>
+        <item name="android:postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+</resources>

@@ -1,12 +1,12 @@
-import {useContext} from 'react';
-import {AuthContext} from './auth/authProvider';
+import React from 'react';
+import {useAuth} from './auth/authProvider';
 import {createStackNavigator} from '@react-navigation/stack';
 import AuthStack from './auth';
 import TabNavigation from './home';
 const Stack = createStackNavigator();
 
 const MainStack = () => {
-  const {user} = useContext(AuthContext);
+  const {user} = useAuth();
 
   return (
     <Stack.Navigator>

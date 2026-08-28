@@ -1,155 +1,105 @@
-/* eslint-disable react/no-unstable-nested-components */
-import React, {useRef, forwardRef, useImperativeHandle, useState} from 'react';
-import SwipeModal, {
-  SwipeModalPublicMethods,
-} from '@birdwingo/react-native-swipe-modal';
-import {Text, View, Button, Modal, HStack, VStack, Divider} from 'native-base';
-import AvatarList from '../avatarList';
-import {Color} from '../../helpers/constatn';
-import {Linking, Platform, TouchableOpacity} from 'react-native';
-import SvgClose from '../../assets/close';
+import {Box, Button, Flex, Image, Text} from 'native-base';
+import React, {forwardRef, useImperativeHandle, useState} from 'react';
+import {Linking, Modal, Platform, Pressable, StyleSheet, TouchableOpacity, View} from 'react-native';
 import DirectionSvgComponent from '../../assets/direction';
+import {Color} from '../../helpers/constatn';
+import VectorIcon from '../vectorIcon';
 
-// Define a type for the custom modal's ref
 export type CustomSwipeModalRef = {
   showModal: () => void;
   hideModal: () => void;
 };
 
-const CustomSwipeModal = forwardRef<CustomSwipeModalRef>(
-  ({coordinate, navigation}: any, ref) => {
-    const modalRef = useRef<SwipeModalPublicMethods>(null);
-    const [modalVisible, setModalVisible] = useState(false);
+type CustomSwipeModalProps = {
+  coordinate: {latitude: number; longitude: number};
+  navigation: any;
+  place?: any;
+};
 
-    // Expose the showModal and hideModal functions via useImperativeHandle
+const CustomSwipeModal = forwardRef<CustomSwipeModalRef, CustomSwipeModalProps>(
+  ({coordinate, navigation, place}, ref) => {
+    const [visible, setVisible] = useState(false);
     useImperativeHandle(ref, () => ({
-      showModal: () => modalRef.current?.show(),
-      hideModal: () => modalRef.current?.hide(),
+      showModal: () => setVisible(true),
+      hideModal: () => setVisible(false),
     }));
-    const openGoogleMap = ({latitude, longitude}: any) => {
-      const scheme = Platform.select({
-        ios: 'maps:0,0?q=',
-        android: 'google.navigation:q=',
-      });
-      const latLng = `${latitude},${longitude}`;
-      const label = 'Custom Label';
+
+    const openDirection = () => {
       const url = Platform.select({
-        ios: `${scheme}${label}@${latLng}&dirflg=d`,
-        android: `${scheme}${latLng}&mode=d`,
+        ios: `maps:0,0?q=${place?.placeName ?? 'Barmej'}@${
+          coordinate.latitude
+        },${coordinate.longitude}`,
+        android: `google.navigation:q=${coordinate.latitude},${coordinate.longitude}&mode=d`,
       });
-      Linking.openURL(url ?? '');
+      if (url) Linking.openURL(url);
     };
 
-    const users = [
-      {
-        name: 'Wesley Ray',
-        status: 'En ligne',
-      },
-      {
-        name: 'ibrahim Ray ',
-        status: 'En ligne',
-      },
-      {
-        name: 'mommtez Ray ',
-        status: 'En ligne',
-      },
-    ];
-    const ClientsInfo = ({name, status}: any) => {
-      return (
-        <HStack mb={2} alignItems={'center'}>
-          <View bg={'#29CC394D'} width={30} height={30} mr={5} />
-          <Text
-            fontFamily={'Inter'}
-            fontSize={12}
-            fontWeight={700}
-            mr={8}
-            width={100}>
-            {name}
-          </Text>
-          <Text
-            color={'#29CC39'}
-            fontFamily={'Inter'}
-            fontSize={12}
-            fontWeight={700}>
-            {status}
-          </Text>
-        </HStack>
-      );
-    };
     return (
-      <SwipeModal ref={modalRef} bg={'white'} maxHeight={400}>
-        <View marginX={19}>
-          <Text fontFamily={'Inter'} fontWeight={500} fontSize={20}>
-            En ce moment à cet endroit
+      <Modal transparent visible={visible} animationType="slide" onRequestClose={() => setVisible(false)}>
+        <View style={styles.overlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setVisible(false)} />
+          <View style={styles.sheet}>
+            <View style={styles.handle} />
+            <Box px={5} pb={6}>
+          {place?.image && (
+            <Image
+              source={{uri: place.image}}
+              alt={place.placeName}
+              width="100%"
+              height={36}
+              borderRadius={18}
+              resizeMode="cover"
+            />
+          )}
+          <Text color={Color.text} fontWeight={800} fontSize={21} mt={4}>
+            {place?.placeName || 'Établissement'}
           </Text>
-          <TouchableOpacity
-            onPress={() => {
-              setModalVisible(true);
-            }}>
-            <AvatarList />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{marginTop: 10}}
-            onPress={() => openGoogleMap(coordinate)}>
-            <HStack
-              width={110}
-              paddingLeft={2}
-              paddingY={2}
-              alignItems={'center'}
-              borderRadius={10}
-              borderWidth={1}>
-              <DirectionSvgComponent />
-              <Text
-                marginLeft={1}
-                color={Color.main}
-                fontFamily={'Inter'}
-                fontSize={16}
-                fontWeight={600}>
-                Direction
-              </Text>
-            </HStack>
-          </TouchableOpacity>
+          <Text color={Color.muted} fontSize={13} mt={1}>
+            {place?.subTitle || 'Découvrez ce lieu près de vous'}
+          </Text>
+          <Flex
+            direction="row"
+            mt={4}
+            alignItems="center"
+            justifyContent="space-between">
+            <Flex direction="row" alignItems="center"><VectorIcon name="mapPin" size={15} color={Color.main}/><Text color={Color.main} fontWeight={700} fontSize={12} ml={1}>À proximité</Text></Flex>
+            <TouchableOpacity onPress={openDirection}>
+              <Flex
+                direction="row"
+                alignItems="center"
+                bg={Color.mainLight}
+                px={3}
+                py={2}
+                borderRadius={14}>
+                <DirectionSvgComponent />
+                <Text color={Color.main} ml={2} fontWeight={700}>
+                  Itinéraire
+                </Text>
+              </Flex>
+            </TouchableOpacity>
+          </Flex>
           <Button
-            borderRadius={'12px'}
-            mt={3}
-            onPress={() => navigation.navigate('Resevation', {id: 1})}
-            backgroundColor={Color.main}>
-            Je réserve
+            mt={5}
+            height={52}
+            borderRadius={16}
+            backgroundColor={Color.main}
+            onPress={() =>
+              navigation.navigate('Details', {id: place?.idPlace ?? place?.id})
+            }>
+            Voir l’établissement
           </Button>
+            </Box>
+          </View>
         </View>
-        <Modal
-          isOpen={modalVisible}
-          onClose={() => setModalVisible(false)}
-          paddingX={2}>
-          <VStack
-            minHeight={200}
-            backgroundColor={'#FFF'}
-            width={'100%'}
-            py={2}
-            borderRadius={8}
-            px={5}>
-            <HStack
-              justifyContent={'space-between'}
-              alignItems={'center'}
-              my={3}>
-              <Text fontFamily={'Inter'} fontWeight={700} fontSize={17}>
-                En ce moment à cet endroit
-              </Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <SvgClose />
-              </TouchableOpacity>
-            </HStack>
-            <Divider mb={5} />
-            <VStack>
-              {users.map(el => (
-                <ClientsInfo name={el.name} status={el.status} />
-              ))}
-            </VStack>
-          </VStack>
-        </Modal>
-      </SwipeModal>
+      </Modal>
     );
   },
 );
 
 export default CustomSwipeModal;
+
+const styles = StyleSheet.create({
+  overlay: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20,15,30,0.42)'},
+  sheet: {maxHeight: 430, backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10},
+  handle: {width: 42, height: 5, borderRadius: 3, backgroundColor: '#DDD7E5', alignSelf: 'center', marginBottom: 10},
+});

@@ -1,171 +1,71 @@
 import {useQuery} from '@tanstack/react-query';
-import {Image, ScrollView, View, Text, Box} from 'native-base';
 import React from 'react';
-import {ImageSourcePropType, Platform, StyleSheet, TouchableOpacity} from 'react-native';
-import LoadingSpinner from '../../../components/Loader';
+import {Image, ImageBackground, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native';
 import SearchBar from '../../../components/search';
 import {Color} from '../../../helpers/constatn';
 import {getCategoriesAPI} from '../../../services/categories';
+import {getFeaturedPlacesAPI} from '../../../services/place';
+import {getProfilAPI} from '../../../services/profil';
+import {getUpcomingReservationAPI} from '../../../services/reservation';
+import VectorIcon, {VectorIconName} from '../../../components/vectorIcon';
 
-export default function CategorieList({navigation}: any) {
-  const listCategorie = [
-    {
-      source: require('../../../assets/gif/cheers.gif'),
-      categoryName: 'After work',
-      name: 'After Work',
-      path: 'HomeScreen',
-    },
-    {
-      source: require('../../../assets/gif/food-delivery.gif'),
-      categoryName: 'Dinner',
-      name: 'Restaurants',
-      path: 'HomeScreen',
-    },
-    {
-      source: require('../../../assets/gif/toast.gif'),
-      categoryName: 'Clubbing',
-      name: 'Clubbing et soirées',
-      path: 'HomeScreen',
-    },
-    {
-      source: require('../../../assets/gif/way.gif'),
-      categoryName: 'Near me',
-      name: 'Autour de moi',
-      path: 'NearMe',
-    },
-  ];
-  const {isLoading, data} = useQuery(['getCategoriesAPI'], getCategoriesAPI, {
-    select: data =>
-      data.map((el: any) => {
-        const element = listCategorie.find(
-          category => category.categoryName === el.categoryName,
-        );
-        return {
-          ...el,
-          categoryImage: element?.source,
-          name: element?.name,
-          path: element?.path,
-        };
-      }),
-  });
+const categoryIcons:Record<string,VectorIconName>={Restaurants:'utensils',Cafés:'coffee',Sorties:'ticket'};
+const intents:{label:string;icon:VectorIconName}[]=[
+  {label:'Ce soir',icon:'clock'},
+  {label:'En amoureux',icon:'heart'},
+  {label:'Petit budget',icon:'wallet'},
+  {label:'Avec des amis',icon:'users'},
+];
+const greeting=()=>{const h=new Date().getHours();return h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';};
+const shortDate=(value?:string)=>value?new Date(value).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
 
-  return (
-    <ScrollView>
-      {<LoadingSpinner visible={isLoading} />}
+export default function ExploreHome({navigation}:any){
+  const {data:categories=[],isRefetching:categoriesRefreshing,refetch:refetchCategories}=useQuery(['getCategoriesAPI'],getCategoriesAPI);
+  const {data:featured=[],isRefetching:featuredRefreshing,refetch:refetchFeatured}=useQuery(['getFeaturedPlaces'],getFeaturedPlacesAPI);
+  const {data:booking,isRefetching:bookingRefreshing,refetch:refetchBooking}=useQuery(['upcomingReservation'],getUpcomingReservationAPI,{refetchOnMount:true});
+  const {data:profile,isRefetching:profileRefreshing,refetch:refetchProfile}=useQuery(['getProfilAPI'],getProfilAPI);
+  const openCategory=(idCategory:number)=>navigation.navigate('HomeScreen',{idCategory});
+  const openPlace=(idPlace:number)=>navigation.navigate('Details',{id:idPlace});
+  const lead=featured[0];
+  return <ScrollView style={s.screen} showsVerticalScrollIndicator={false} contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={categoriesRefreshing||featuredRefreshing||bookingRefreshing||profileRefreshing} onRefresh={()=>{void Promise.all([refetchCategories(),refetchFeatured(),refetchBooking(),refetchProfile()]);}} colors={[Color.main]}/>}>
+    <View style={s.hero}>
+      <View style={s.orbA}/><View style={s.orbB}/>
+      <View style={s.top}><View><Text style={s.hello}>{greeting()},</Text><View style={s.nameRow}><Text style={s.name}>{profile?.firstName||'explorateur'}</Text><VectorIcon name="sparkles" size={16} color="#F4B45E"/></View></View><Pressable onPress={()=>navigation.getParent()?.navigate('Profil')} style={s.avatarBox}>{profile?.userPhoto?<Image source={{uri:profile.userPhoto}} style={s.avatar}/>:<Text style={s.avatarText}>{profile?.firstName?.[0]||'B'}</Text>}<View style={s.online}/></Pressable></View>
+      <Text style={s.kicker}>VOTRE VILLE, VOS ENVIES</Text>
+      <Text style={s.heroTitle}>Quelle sera votre</Text>
+      <Text style={s.heroTitle}>prochaine <Text style={s.heroAccent}>sortie ?</Text></Text>
+      <Text style={s.heroText}>Des adresses choisies selon votre humeur, votre moment et votre budget.</Text>
+      <View style={s.search}><SearchBar navigation={navigation}/></View>
+    </View>
 
-      <Box style={styles.containerText}>
-        <Text style={styles.title}>Catégories</Text>
-        <Text style={styles.subTitle}>Sélectionnez votre catégorie </Text>
-      </Box>
-      <Box padding={5}>
-        <SearchBar navigation={navigation} />
-      </Box>
-      <View style={styles.scrollView}>
-        {data?.map(
-          (el: {
-            name:
-              | string
-              | number
-              | boolean
-              | React.ReactElement<
-                  any,
-                  string | React.JSXElementConstructor<any>
-                >
-              | Iterable<React.ReactNode>
-              | React.ReactPortal
-              | null
-              | undefined;
-            path: any;
-            idCategory: any;
-            categoryImage: ImageSourcePropType | undefined;
-          }) => {
-            return (
-              <>
-                {el.name && (
-                  <TouchableOpacity
-                    style={styles.container}
-                    onPress={() =>
-                      navigation.navigate(el.path, {
-                        idCategory: el.idCategory,
-                      })
-                    }>
-                    <View style={styles.imgBorder}>
-                      <Image
-                        resizeMode= {Platform.OS ==="ios"?"contain":"center"}
-                        alt={'gif'}
-                        source={el?.categoryImage}
-                        style={styles.gifPicture}
-                      />
-                    </View>
-                    <Text>{el.name}</Text>
-                  </TouchableOpacity>
-                )}
-              </>
-            );
-          },
-        )}
-      </View>
-    </ScrollView>
-  );
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.intentRow}>{intents.map(({label,icon},index)=><Pressable key={label} onPress={()=>navigation.navigate('HomeScreen',{intent:label})} style={({pressed})=>[s.intent,index===0&&s.intentOn,pressed&&s.intentPressed]}><View style={[s.intentIcon,index===0&&s.intentIconOn]}><VectorIcon name={icon} size={16} color={index===0?'#FFFFFF':'#4D3B80'}/></View><Text style={[s.intentLabel,index===0&&s.white]}>{label}</Text></Pressable>)}</ScrollView>
+
+    <Pressable onPress={()=>navigation.navigate('NearMe')} style={s.near}><View style={s.nearOrb}/><View style={s.nearIcon}><VectorIcon name="mapPin" size={26} color="#312446"/></View><View style={s.flex}><Text style={s.nearKicker}>AUTOUR DE VOUS</Text><Text style={s.nearTitle}>Voir ce qui est proche</Text><Text style={s.nearText}>Carte en direct · adresses ouvertes</Text></View><View style={s.arrowBox}><VectorIcon name="arrowRight" size={19} color="#FFFFFF"/></View></Pressable>
+
+    {booking?<View style={s.section}><Header eyebrow="À VENIR" title="Votre prochain moment" action="Toutes" onPress={()=>navigation.getParent()?.navigate('Reservations')}/><Pressable onPress={()=>navigation.getParent()?.navigate('Reservations')} style={s.booking}>{booking.image?<Image source={{uri:booking.image}} style={s.bookingImage}/>:<View style={s.bookingImage}/>}<View style={s.bookingBody}><View style={s.bookingTop}><View style={[s.status,booking.status==='CONFIRMED'&&s.statusOk]}><Text style={[s.statusLabel,booking.status==='CONFIRMED'&&s.statusLabelOk]}>{booking.status==='CONFIRMED'?'CONFIRMÉE':booking.status==='PROPOSED'?'HORAIRE PROPOSÉ':'EN ATTENTE'}</Text></View><VectorIcon name="arrowRight" size={18} color="#4D3B80"/></View><Text numberOfLines={1} style={s.bookingName}>{booking.placeName}</Text><View style={s.details}><Detail icon="calendar" text={shortDate(booking.reservationDate)}/><Detail icon="clock" text={booking.reservationTime?.substring(0,5)}/><Detail icon="users" text={String(booking.numberOfPersons)}/></View></View></Pressable></View>:null}
+
+    <View style={s.section}><Header eyebrow="ÉDITION DU JOUR" title="Une adresse à vivre" subtitle="Notre sélection, pas un simple classement"/>
+      {lead?<Pressable onPress={()=>openPlace(lead.idPlace)} style={s.lead}><ImageBackground source={{uri:lead.image}} style={s.leadImage} imageStyle={s.radius}><View style={s.overlay}/><View style={s.choice}><Text style={s.choiceText}>CHOIX BARMEJ</Text></View><View style={s.leadCopy}><Text style={s.leadKicker}>{lead.cuisineType||'À DÉCOUVRIR'}</Text><Text numberOfLines={2} style={s.leadTitle}>{lead.placeName}</Text><Text numberOfLines={1} style={s.leadText}>{lead.subTitle||'Une expérience sélectionnée pour vous'}</Text><View style={s.leadBottom}><View style={s.addressRow}><VectorIcon name="mapPin" size={14} color="#E3DDE8"/><Text numberOfLines={1} style={s.address}>{lead.placeAdress||'Tunis'}</Text></View><View style={s.discover}><Text style={s.discoverText}>Découvrir</Text><VectorIcon name="arrowRight" size={14} color="#352744"/></View></View></View></ImageBackground></Pressable>:null}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.cardRow}>{featured.slice(1,5).map((place:any)=><Pressable key={place.idPlace} onPress={()=>openPlace(place.idPlace)} style={s.placeCard}>{place.image?<Image source={{uri:place.image}} style={s.placeImage}/>:<View style={s.placeImage}/>}<View style={s.placeBody}><Text numberOfLines={1} style={s.placeName}>{place.placeName}</Text><Text numberOfLines={1} style={s.placeText}>{place.subTitle||place.cuisineType||'Adresse Barmej'}</Text><View style={s.placeBottom}><View style={s.ratingRow}>{place.rating?<><VectorIcon name="star" size={12} color="#9A6821"/><Text style={s.placeRating}>{place.rating}</Text></>:<Text style={s.placeRating}>Nouveau</Text>}</View><VectorIcon name="arrowRight" size={16} color="#4D3B80"/></View></View></Pressable>)}</ScrollView>
+    </View>
+
+    <View style={s.section}><Header eyebrow="EXPLORER" title="Une envie, une catégorie"/><View style={s.grid}>{categories.map((category:any,index:number)=><Pressable key={category.idCategory} onPress={()=>openCategory(category.idCategory)} style={[s.category,index===0&&s.categoryWide]}>{category.image?<ImageBackground source={{uri:category.image}} style={s.categoryImage} imageStyle={s.radius}><View style={s.categoryOverlay}/><View style={s.categoryCopy}><VectorIcon name={categoryIcons[category.categoryName]||'sparkles'} size={24} color="#FFFFFF"/><Text style={s.categoryName}>{category.categoryName}</Text><View style={s.categoryAction}><Text style={s.categoryLink}>Explorer</Text><VectorIcon name="arrowRight" size={13} color="#F1EAF5"/></View></View></ImageBackground>:<View style={s.categoryFallback}><VectorIcon name={categoryIcons[category.categoryName]||'sparkles'} size={24} color="#FFFFFF"/><Text style={s.categoryName}>{category.categoryName}</Text></View>}</Pressable>)}</View></View>
+
+    <View style={s.quickRow}><Pressable onPress={()=>navigation.navigate('FavoriteList')} style={s.favorite}><View style={s.favoriteIcon}><VectorIcon name="heart" size={22} color="#D85C72"/></View><Text style={s.quickKicker}>VOTRE COLLECTION</Text><Text style={s.quickTitle}>Adresses favorites</Text><Text style={s.quickLink}>Retrouver mes envies</Text></Pressable><Pressable onPress={()=>navigation.getParent()?.navigate('Experience')} style={s.experience}><View style={s.experienceIcon}><VectorIcon name="sparkles" size={22} color="#F4B45E"/></View><Text style={s.experienceKicker}>BARMEJ+</Text><Text style={s.experienceTitle}>Créer une expérience</Text><Text style={s.experienceLink}>Planifier ensemble</Text></Pressable></View>
+  </ScrollView>;
 }
 
-const styles = StyleSheet.create({
-  categorieName: {
-    color: '#090A0A',
-    textAlign: 'center',
-    fontSize: 12,
-    fontFamily: 'Inter',
-    fontWeight: '500',
-    lineHeight: 32,
-  },
-  containerText: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 20,
-    fontFamily: 'Inter',
-    fontWeight: '600',
-    lineHeight: 28,
-  },
-  subTitle: {
-    color: '#6D6D6D',
-    textAlign: 'center',
-    fontSize: 15,
-    fontFamily: 'Inter',
-    lineHeight: 28,
-  },
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-  },
-  scrollView: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  gifPicture: {
-    width: 151,
-    height: 113,
-    borderRadius: 100,
-  },
-  imgBorder: {
-    width: 151,
-    height: 113,
-    borderRadius: 32,
-    overflow: 'hidden',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: '20%',
-    borderColor: Color.main,
-    borderWidth: 4,
-    backgroundColor: 'white',
-  },
+function Header({eyebrow,title,subtitle,action,onPress}:{eyebrow:string;title:string;subtitle?:string;action?:string;onPress?:()=>void}){return <View style={s.header}><View style={s.flex}><Text style={s.headerKicker}>{eyebrow}</Text><Text style={s.headerTitle}>{title}</Text>{subtitle?<Text style={s.headerText}>{subtitle}</Text>:null}</View>{action?<Pressable onPress={onPress} style={s.headerAction}><Text style={s.headerActionText}>{action}</Text><VectorIcon name="arrowRight" size={13} color="#4D3B80"/></Pressable>:null}</View>;}
+function Detail({icon,text}:{icon:VectorIconName;text?:string}){return <View style={s.detail}><VectorIcon name={icon} size={12} color="#76658F"/><Text style={s.detailText}>{text||'-'}</Text></View>;}
+
+const s=StyleSheet.create({
+  screen:{flex:1,backgroundColor:'#F7F5F1'},page:{paddingBottom:125},flex:{flex:1},hero:{backgroundColor:'#261D38',paddingHorizontal:20,paddingTop:48,paddingBottom:24,borderBottomLeftRadius:36,borderBottomRightRadius:36,overflow:'visible'},orbA:{position:'absolute',width:240,height:240,borderRadius:120,backgroundColor:'rgba(132,101,184,.18)',right:-90,top:-70},orbB:{position:'absolute',width:130,height:130,borderRadius:65,backgroundColor:'rgba(244,173,84,.15)',left:-65,bottom:30},top:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},hello:{fontSize:10,color:'#BEB6C9',fontWeight:'700'},nameRow:{flexDirection:'row',alignItems:'center',gap:6,marginTop:2},name:{fontSize:17,color:'white',fontWeight:'900'},gold:{color:'#F4B45E'},avatarBox:{width:47,height:47,borderRadius:17,backgroundColor:'#4B3D62',alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'rgba(255,255,255,.2)'},avatar:{width:43,height:43,borderRadius:15},avatarText:{fontSize:16,fontWeight:'900',color:'white'},online:{position:'absolute',right:-2,bottom:-2,width:12,height:12,borderRadius:6,backgroundColor:'#57C68B',borderWidth:2,borderColor:'#261D38'},kicker:{fontSize:8,fontWeight:'900',letterSpacing:1.7,color:'#F4B45E',marginTop:28},heroTitle:{fontSize:35,lineHeight:41,fontWeight:'900',letterSpacing:-1.2,color:'white'},heroAccent:{color:'#F4B45E',fontStyle:'italic'},heroText:{fontSize:11,lineHeight:17,color:'#C9C1D2',maxWidth:315,marginTop:10},search:{marginTop:20,zIndex:50},
+  intentRow:{paddingHorizontal:18,paddingTop:17,paddingBottom:5,gap:9},intent:{height:48,borderRadius:17,backgroundColor:'white',borderWidth:1,borderColor:'#E7E0E9',paddingHorizontal:12,flexDirection:'row',alignItems:'center'},intentOn:{backgroundColor:'#4D3B80',borderColor:'#4D3B80'},intentPressed:{opacity:.72,transform:[{scale:.98}]},intentIcon:{width:27,height:27,borderRadius:10,backgroundColor:'#F1ECF5',alignItems:'center',justifyContent:'center',marginRight:7},intentIconOn:{backgroundColor:'rgba(255,255,255,.17)'},intentIconText:{fontSize:12,fontWeight:'900',color:'#4D3B80'},intentLabel:{fontSize:10,fontWeight:'900',color:'#2A2136'},white:{color:'white'},
+  near:{marginHorizontal:18,marginTop:16,minHeight:105,borderRadius:25,backgroundColor:'#4D3B80',padding:16,flexDirection:'row',alignItems:'center',overflow:'hidden'},nearOrb:{position:'absolute',width:115,height:115,borderRadius:58,backgroundColor:'rgba(255,255,255,.07)',right:-25,top:-45},nearIcon:{width:54,height:54,borderRadius:18,backgroundColor:'#F4B45E',alignItems:'center',justifyContent:'center',marginRight:13},nearIconText:{fontSize:25,fontWeight:'900',color:'#312446'},nearKicker:{fontSize:7,fontWeight:'900',letterSpacing:1.2,color:'#D8CDE8'},nearTitle:{fontSize:16,fontWeight:'900',color:'white',marginTop:3},nearText:{fontSize:8,color:'#D6CEE0',marginTop:4},arrowBox:{width:39,height:39,borderRadius:14,backgroundColor:'rgba(255,255,255,.14)',alignItems:'center',justifyContent:'center'},arrow:{fontSize:18,color:'white'},
+  section:{marginTop:31},header:{paddingHorizontal:19,flexDirection:'row',alignItems:'flex-end',marginBottom:13},headerKicker:{fontSize:7,fontWeight:'900',letterSpacing:1.5,color:'#9A6821'},headerTitle:{fontSize:23,lineHeight:28,fontWeight:'900',letterSpacing:-.5,color:'#21182E',marginTop:4},headerText:{fontSize:9,color:'#8D8694',marginTop:4},headerAction:{height:35,borderRadius:12,backgroundColor:'#ECE6F3',paddingHorizontal:11,flexDirection:'row',gap:5,alignItems:'center',justifyContent:'center'},headerActionText:{fontSize:9,fontWeight:'900',color:'#4D3B80'},
+  booking:{marginHorizontal:18,minHeight:125,borderRadius:25,backgroundColor:'white',borderWidth:1,borderColor:'#E7E1E8',padding:10,flexDirection:'row',shadowColor:'#21182E',shadowOpacity:.05,shadowRadius:14,shadowOffset:{width:0,height:6},elevation:2},bookingImage:{width:108,height:105,borderRadius:19,backgroundColor:'#E8E2EA'},bookingBody:{flex:1,paddingLeft:13,paddingVertical:3},bookingTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},status:{height:25,borderRadius:9,backgroundColor:'#FFF0D7',paddingHorizontal:8,alignItems:'center',justifyContent:'center'},statusOk:{backgroundColor:'#E2F5EA'},statusLabel:{fontSize:7,fontWeight:'900',color:'#9A6412'},statusLabelOk:{color:'#187653'},chevron:{fontSize:25,color:'#4D3B80'},bookingName:{fontSize:17,fontWeight:'900',color:'#21182E',marginTop:8},details:{flexDirection:'row',flexWrap:'wrap',gap:7,marginTop:11},detail:{flexDirection:'row',alignItems:'center',gap:3},detailIcon:{fontSize:10,fontWeight:'900',color:'#76658F',marginRight:3},detailText:{fontSize:8,fontWeight:'700',color:'#756E7C'},
+  lead:{marginHorizontal:18,height:360,borderRadius:29,overflow:'hidden',backgroundColor:'#2A2235'},leadImage:{flex:1,justifyContent:'space-between'},radius:{borderRadius:29},overlay:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(23,15,30,.42)'},choice:{alignSelf:'flex-start',margin:16,height:31,borderRadius:11,backgroundColor:'#F4B45E',paddingHorizontal:11,alignItems:'center',justifyContent:'center'},choiceText:{fontSize:8,fontWeight:'900',color:'#33233F'},leadCopy:{padding:18},leadKicker:{fontSize:8,fontWeight:'900',letterSpacing:1.3,color:'#F5BC70'},leadTitle:{fontSize:30,lineHeight:34,fontWeight:'900',color:'white',marginTop:5},leadText:{fontSize:11,color:'#E3DDE8',marginTop:6},leadBottom:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:17},addressRow:{flex:1,flexDirection:'row',alignItems:'center',gap:5,marginRight:8},address:{flex:1,fontSize:9,fontWeight:'700',color:'#E3DDE8'},discover:{height:39,borderRadius:14,backgroundColor:'white',paddingHorizontal:13,flexDirection:'row',gap:5,alignItems:'center',justifyContent:'center'},discoverText:{fontSize:9,fontWeight:'900',color:'#352744'},
+  cardRow:{paddingHorizontal:18,paddingTop:12,gap:11},placeCard:{width:210,borderRadius:23,backgroundColor:'white',borderWidth:1,borderColor:'#E7E1E8',overflow:'hidden'},placeImage:{width:'100%',height:120,backgroundColor:'#E9E3EA'},placeBody:{padding:13},placeName:{fontSize:15,fontWeight:'900',color:'#21182E'},placeText:{fontSize:9,color:'#8A838F',marginTop:4},placeBottom:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:11},ratingRow:{flexDirection:'row',alignItems:'center',gap:4},placeRating:{fontSize:8,fontWeight:'900',color:'#9A6821'},up:{fontSize:16,color:'#4D3B80'},
+  grid:{paddingHorizontal:18,flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between'},category:{width:'48.5%',height:170,borderRadius:24,overflow:'hidden',marginBottom:11},categoryWide:{width:'100%',height:205},categoryImage:{flex:1,justifyContent:'flex-end'},categoryOverlay:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(26,18,34,.38)'},categoryCopy:{padding:15},categoryEmoji:{fontSize:20,color:'white'},categoryName:{fontSize:18,fontWeight:'900',color:'white',marginTop:5},categoryAction:{flexDirection:'row',alignItems:'center',gap:5,marginTop:5},categoryLink:{fontSize:8,fontWeight:'800',color:'#F1EAF5'},categoryFallback:{flex:1,backgroundColor:'#4D3B80',padding:15,justifyContent:'flex-end'},
+  quickRow:{paddingHorizontal:18,marginTop:20,flexDirection:'row',gap:10},favorite:{flex:1,minHeight:182,borderRadius:24,backgroundColor:'#FFF0EF',padding:15,borderWidth:1,borderColor:'#F3D9D7'},favoriteIcon:{width:43,height:43,borderRadius:15,backgroundColor:'white',alignItems:'center',justifyContent:'center'},favoriteIconText:{fontSize:22,fontWeight:'900',color:'#D85C72'},quickKicker:{fontSize:7,fontWeight:'900',letterSpacing:1,color:'#A74E5E',marginTop:18},quickTitle:{fontSize:16,lineHeight:20,fontWeight:'900',color:'#38242A',marginTop:4},quickLink:{fontSize:8,fontWeight:'800',color:'#A74E5E',marginTop:12},experience:{flex:1,minHeight:182,borderRadius:24,backgroundColor:'#4D3B80',padding:15},experienceIcon:{width:43,height:43,borderRadius:15,backgroundColor:'rgba(255,255,255,.15)',alignItems:'center',justifyContent:'center'},experienceKicker:{fontSize:7,fontWeight:'900',letterSpacing:1,color:'#D8CDE8',marginTop:18},experienceTitle:{fontSize:16,lineHeight:20,fontWeight:'900',color:'white',marginTop:4},experienceLink:{fontSize:8,fontWeight:'800',color:'#F4B45E',marginTop:12}
 });

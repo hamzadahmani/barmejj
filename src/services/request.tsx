@@ -1,59 +1,68 @@
 import axios from 'axios';
-import {AuthContext} from '../routes/auth/authProvider';
-import {useContext} from 'react';
+import {useAuth} from '../routes/auth/authProvider';
+import React, {PropsWithChildren, useCallback, useEffect} from 'react';
 import {useToast} from 'native-base';
 import Toast from '../components/toast';
-const API_URI = 'http://217.182.211.117:8090';
+import {API_URI} from '../config/api';
 
 const instance = axios.create({
   baseURL: API_URI + '/',
+  timeout: 60000,
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  },
 });
 
-const AxiosInterceptor = ({children}: any) => {
-  /* -------------------------------------------------------------------------- */
-  /*                                    HOOKS                                   */
-  /* -------------------------------------------------------------------------- */
-  const {user} = useContext(AuthContext);
+const AxiosInterceptor = ({children}: PropsWithChildren) => {
+  const {user} = useAuth();
   const toast = useToast();
-
-  /* -------------------------------------------------------------------------- */
-  /*                                  CONSTATNT                                 */
-  /* -------------------------------------------------------------------------- */
   const accessToken = user?.token;
-  /* -------------------------------------------------------------------------- */
-  /*                                   REQUEST                                  */
-  /* -------------------------------------------------------------------------- */
-  instance.interceptors.request.use(config => {
-    config.timeout = 5000; // Wait for 5 seconds before timing out
-    if (
-      !config?.headers?.Authorization &&
-      accessToken &&
-      config.url !== '/authenticate'
-    ) {
-      // @ts-ignore
-      config.headers.Authorization = 'Bearer ' + accessToken;
-    }
-    return config;
-  });
-  /* -------------------------------------------------------------------------- */
-  /*                                  RESPONSE                                  */
-  /* -------------------------------------------------------------------------- */
-  const resInterceptor = (response: any) => {
-    return response;
-  };
-  const errInterceptor = async (error: any) => {
-    toast.show({
-      placement: 'top',
-      render: () => {
-        return <Toast message={'Erreur serveur'} status={'#e74c3c'} />;
-      },
-    });
-    return Promise.reject(error);
-  };
 
-  instance.interceptors.response.use(resInterceptor, errInterceptor);
-  return children;
+  const errInterceptor = useCallback(
+    async (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        (error?.code === 'ECONNABORTED'
+          ? 'Le serveur met trop de temps à répondre. Réessayez.'
+          : error?.response
+          ? 'Une erreur est survenue. Vérifiez vos informations.'
+          : 'Connexion au serveur impossible. Vérifiez Internet.');
+      toast.show({
+        placement: 'top',
+        render: () => {
+          return <Toast message={message} status={'#e74c3c'} />;
+        },
+      });
+      return Promise.reject(error);
+    },
+    [toast],
+  );
+
+  useEffect(() => {
+    const requestInterceptor = instance.interceptors.request.use(config => {
+      if (
+        !config.headers.Authorization &&
+        accessToken &&
+        config.url !== 'authenticate'
+      ) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
+      return config;
+    });
+    const responseInterceptor = instance.interceptors.response.use(
+      response => response,
+      errInterceptor,
+    );
+
+    return () => {
+      instance.interceptors.request.eject(requestInterceptor);
+      instance.interceptors.response.eject(responseInterceptor);
+    };
+  }, [accessToken, errInterceptor]);
+
+  return <>{children}</>;
 };
 
 export default instance;
-export {AxiosInterceptor};
+export {AxiosInterceptor, API_URI};

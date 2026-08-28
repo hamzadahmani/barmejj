@@ -4,13 +4,18 @@ import SvgComponentAlert from '../../../assets/Alert';
 
 export default function NoFavorit() {
   return (
-    <Flex mt={5} alignItems={'center'} justifyContent={'center'} flex={1}>
+    <Flex
+      mt={24}
+      px={8}
+      alignItems={'center'}
+      justifyContent={'center'}
+      flex={1}>
       <View
         style={{
           borderRadius: 28,
           borderWidth: 8,
-          borderColor: '#FFFAEB',
-          backgroundColor: '#FEF0C7',
+          borderColor: '#EEEAF8',
+          backgroundColor: '#E4DDF5',
         }}>
         <SvgComponentAlert />
       </View>
@@ -21,7 +26,7 @@ export default function NoFavorit() {
         fontWeight={500}
         fontFamily={'Poppins'}
         lineHeight={20}>
-        Pas de favoris pour l’instant
+        Aucun favori pour l’instant
       </Text>
       <Text
         color={'#667085'}
@@ -30,7 +35,7 @@ export default function NoFavorit() {
         fontWeight={400}
         fontFamily={'Poppins'}
         lineHeight={20}>
-        Tu n’as pas encore des favoris dans votre liste
+        Ajoutez vos lieux préférés pour les retrouver facilement ici.
       </Text>
     </Flex>
   );

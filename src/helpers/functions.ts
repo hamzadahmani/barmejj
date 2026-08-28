@@ -68,3 +68,6 @@ export const trasformedReservationTime = (startTime: Date, endTime: Date) => {
   }
   return timeIntervals;
 };
+
+export const isOpen = (horaire: string | null) =>
+  horaire ? isTimeWithinRange(horaire) : false;

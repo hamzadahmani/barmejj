@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function MainLayout({children}: any) {
   return (
-    <Flex gap={5} paddingX={5} bgColor={'#F5F5F5'}>
+    <Flex flex={1} bgColor={'#F7F5F9'}>
       {children}
     </Flex>
   );

@@ -1,11 +1,3 @@
-import {Text} from 'native-base';
-import styled from 'styled-components/native';
+import {createStyledText} from '../StyledText';
 
-export const StyledUserName = styled(Text)`
-  font-family: 'Manrope';
-  font-style: normal;
-  font-weight: 700;
-  font-size: 14px;
-  line-height: 20px;
-  color: #090a0a;
-`;
+export const StyledUserName = createStyledText({fontFamily: 'Manrope', fontWeight: '700', fontSize: 16, lineHeight: 22, color: '#19152A'});

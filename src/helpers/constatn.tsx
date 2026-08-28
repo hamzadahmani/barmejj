@@ -1,7 +1,13 @@
-import dynamicLinks from '@react-native-firebase/dynamic-links';
 export const Color = {
   red: '#E74C3C',
   main: '#45377A',
+  mainLight: '#EEEAF8',
+  accent: '#E8A45B',
+  background: '#F7F7FB',
+  surface: '#FFFFFF',
+  text: '#19152A',
+  muted: '#777382',
+  border: '#ECEAF1',
   success: '#008000',
   error: '#e74c3c',
 };
@@ -10,7 +16,7 @@ export const linking = {
   prefixes: ['barmejApp://'],
   config: {
     screens: {
-      main: {
+      Main: {
         screens: {
           Home: {
             screens: {
@@ -24,21 +30,8 @@ export const linking = {
 };
 
 export async function buildLink(params: string) {
-  const link = await dynamicLinks().buildShortLink(
-    {
-      link: `https://barmej.page.link/?link=https://barmej.page.link?${params}`,
-      // domainUriPrefix is created in your Firebase console
-      domainUriPrefix: 'https://barmej.page.link',
-      // optional setup which updates Firebase analytics campaign
-      // "banner". This also needs setting up before hand
-      android: {
-        packageName: 'com.barmej',
-      },
-    },
-
-    dynamicLinks.ShortLinkType.DEFAULT,
-  );
-  return link;
+  const placeId = params.split('=')[1];
+  return `barmejApp://places/${placeId}`;
 }
 
 export function getQueryParams(url: string) {

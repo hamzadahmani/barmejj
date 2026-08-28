@@ -4,6 +4,15 @@ import UpadateResevationScreen from '../../screens/main/myReservations/updateRes
 import Profil from '../../screens/main/profil';
 import React from 'react';
 import SettingsScreen from '../../screens/main/profil/settings';
+import TermsAndConditionsScreen from '../../screens/policy/termAndCondition';
+import PolicyScreen from '../../screens/policy/policy';
+import VerifiedReviewsScreen from '../../screens/main/community/reviews';
+import WaitlistScreen from '../../screens/main/community/waitlist';
+import GroupPlannerScreen from '../../screens/main/community/groupPlanner';
+import SmartAssistantScreen from '../../screens/main/community/assistant';
+import DetailsPlace from '../../screens/main/detailsPlace';
+import PersonalizationScreen from '../../screens/main/profil/personalization';
+import NotficationScreen from '../../screens/notfication';
 const Stack = createStackNavigator();
 
 export default function StackProfil() {
@@ -47,6 +56,33 @@ export default function StackProfil() {
           },
         }}
       />
+      <Stack.Screen
+        name="TermsAndConditions"
+        component={TermsAndConditionsScreen}
+        options={{
+          title: 'Termes et conditions',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="policy"
+        component={PolicyScreen}
+        options={{
+          title: 'politique',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+        }}
+      />
+      <Stack.Screen name="VerifiedReviews" component={VerifiedReviewsScreen} options={{headerShown: false}} />
+      <Stack.Screen name="Waitlist" component={WaitlistScreen} options={{headerShown: false}} />
+      <Stack.Screen name="GroupPlanner" component={GroupPlannerScreen} options={{headerShown: false}} />
+      <Stack.Screen name="SmartAssistant" component={SmartAssistantScreen} options={{headerShown: false}} />
+      <Stack.Screen name="Details" component={DetailsPlace} options={{headerShown: false}} />
+      <Stack.Screen name="Personalization" component={PersonalizationScreen} options={{headerShown: false}} />
+      <Stack.Screen name="Notifications" component={NotficationScreen} options={{headerShown: false}} />
     </Stack.Navigator>
   );
 }

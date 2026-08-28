@@ -5,7 +5,7 @@
  * @format
  */
 
-import React, {useEffect} from 'react';
+import React from 'react';
 import {NativeBaseProvider} from 'native-base';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {NavigationContainer} from '@react-navigation/native';
@@ -13,95 +13,39 @@ import MainStack from './src/routes/main';
 import AuthProvider from './src/routes/auth/authProvider';
 import {AxiosInterceptor} from './src/services/request';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import usePushNotification from './src/hooks/usePushNotification';
-import {getQueryParams, linking} from './src/helpers/constatn';
-import dynamicLinks from '@react-native-firebase/dynamic-links';
-import {SafeAreaView} from 'react-native';
+import {linking} from './src/helpers/constatn';
+import {StatusBar} from 'react-native';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+import AppErrorBoundary from './src/components/AppErrorBoundary';
 
-function App(): JSX.Element {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        // Global query options
-        retry: false, // Disable automatic retries
-        staleTime: 5000,
-      },
-    },
-  });
-  const {
-    requestUserPermission,
-    getFCMToken,
-    listenToBackgroundNotifications,
-    listenToForegroundNotifications,
-    onNotificationOpenedAppFromBackground,
-    onNotificationOpenedAppFromQuit,
-  } = usePushNotification();
+const queryClient = new QueryClient({
+  defaultOptions: {queries: {retry: false, staleTime: 5000}},
+});
 
-  useEffect(() => {
-    const listenToNotifications = () => {
-      try {
-        getFCMToken();
-        requestUserPermission();
-        onNotificationOpenedAppFromQuit();
-        listenToBackgroundNotifications();
-        listenToForegroundNotifications();
-        onNotificationOpenedAppFromBackground();
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    listenToNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleDynamicLink = (link: any) => {
-    // Handle dynamic link inside your own application
-    console.log('link', link);
-    let productId = getQueryParams(link.url);
-    console.log('productId:', productId);
-    if (link.url === 'https://invertase.io/offer') {
-      // ...navigate to your offers screen
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = dynamicLinks().onLink(handleDynamicLink);
-    // When the component is unmounted, remove the listener
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    dynamicLinks()
-      .getInitialLink()
-      .then((link: any) => {
-        console.log('closed link', link);
-
-        if (link.url === 'https://invertase.io/offer') {
-          // ...set initial route as offers screen
-        }
-      });
-  }, []);
+function App(): React.JSX.Element {
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <NativeBaseProvider>
-            <NavigationContainer linking={linking}>
-              <AxiosInterceptor>
-                <SafeAreaView
-                  style={{
-                    flex: 1,
-                    backgroundColor: 'transparent',
-                  }}>
-                  <MainStack />
-                </SafeAreaView>
-              </AxiosInterceptor>
-            </NavigationContainer>
-          </NativeBaseProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <AppErrorBoundary>
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" />
+        <GestureHandlerRootView style={{flex: 1}}>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <NativeBaseProvider>
+                <NavigationContainer linking={linking as any}>
+                  <AxiosInterceptor>
+                    <SafeAreaView
+                      edges={['top', 'bottom']}
+                      style={{flex: 1, backgroundColor: '#F7F7FB'}}>
+                      <MainStack />
+                    </SafeAreaView>
+                  </AxiosInterceptor>
+                </NavigationContainer>
+              </NativeBaseProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </AppErrorBoundary>
   );
 }
 

@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 import {
+  Actionsheet,
   Avatar,
   Box,
   Button,
-  CheckIcon,
-  ChevronRightIcon,
+  ChevronDownIcon,
   Flex,
   FormControl,
   Input,
   KeyboardAvoidingView,
   ScrollView,
-  Select,
   Text,
   useToast,
   View,
@@ -24,7 +23,7 @@ import {useForm, Controller} from 'react-hook-form';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Color, formList} from '../../../helpers/constatn';
-import {Keyboard, Platform, Pressable} from 'react-native';
+import {Keyboard, Platform, Pressable, RefreshControl} from 'react-native';
 import SvgPhoto from '../../../assets/Photo';
 import {useMutation, useQuery} from '@tanstack/react-query';
 import {getProfilAPI, updateProfilAPI} from '../../../services/profil';
@@ -33,6 +32,7 @@ import Toast from '../../../components/toast';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import DatePickerForm from '../../../components/form/DatePicker';
+import {getLoyaltyAccountsAPI} from '../../../services/loyalty';
 type EnumInputs =
   | 'firstName'
   | 'lastName'
@@ -41,19 +41,19 @@ type EnumInputs =
   | 'userGender'
   | 'userPhoto'
   | 'dateOfBirth';
-const schema = yup
-  .object({
-    firstName: yup.string().required('Champ obligatoire'),
-    lastName: yup.string().required('Champ obligatoire'),
-    userMail: yup.string().email('invalid format email'),
-    userMobile: yup.string().required('Champ obligatoire'),
-    userGender: yup.string().required('Champ obligatoire'),
-    userPhoto: yup.string(),
-    dateOfBirth: yup.string().required('Champ obligatoire'),
-  })
-  .required();
+const schema = yup.object({
+  firstName: yup.string().required('Champ obligatoire'),
+  lastName: yup.string().required('Champ obligatoire'),
+  userMail: yup.string().email('invalid format email'),
+  userMobile: yup.string().required('Champ obligatoire'),
+  userGender: yup.string().required('Champ obligatoire'),
+  userPhoto: yup.string(),
+  dateOfBirth: yup.string().required('Champ obligatoire'),
+});
+
 export default function Profil({navigation}: any) {
   const [editMode, setEditMode] = useState(false);
+  const [genderSelectorOpen, setGenderSelectorOpen] = useState(false);
   const toast = useToast();
 
   const {
@@ -78,7 +78,7 @@ export default function Profil({navigation}: any) {
 
   const photoUri = watch('userPhoto');
 
-  const {isLoading: getLoading, data: currentUser} = useQuery(
+  const {isLoading: getLoading, isRefetching: profileRefreshing, data: currentUser, refetch: refetchProfile} = useQuery(
     ['getUserData'],
     getProfilAPI,
     {
@@ -88,6 +88,7 @@ export default function Profil({navigation}: any) {
       },
     },
   );
+  const {data: loyaltyAccounts, isRefetching: loyaltyRefreshing, refetch: refetchLoyalty} = useQuery(['loyaltyAccounts'], getLoyaltyAccountsAPI);
 
   const {mutate: updateProfilMutate, isLoading} = useMutation(
     (data: any) => updateProfilAPI(data),
@@ -111,20 +112,8 @@ export default function Profil({navigation}: any) {
       },
     },
   );
-  const _handleGender = (gender: string) => {
-    switch (gender) {
-      case 'H':
-        return 'Homme';
-      case 'W':
-        return 'Femme';
-      case 'O':
-        return 'Autre';
-      default:
-        'Homme';
-    }
-  };
-
   const onSubmit = (data: any) => {
+    console.log('im in ');
     Keyboard.dismiss();
     const {
       userPwd,
@@ -152,32 +141,46 @@ export default function Profil({navigation}: any) {
       {<LoadingSpinner visible={isLoading || getLoading} />}
 
       <ScrollView
+        refreshControl={<RefreshControl refreshing={profileRefreshing || loyaltyRefreshing} onRefresh={() => {void Promise.all([refetchProfile(), refetchLoyalty()]);}} colors={[Color.main]} tintColor={Color.main}/>} 
         contentContainerStyle={{
           paddingBottom: 100,
-          backgroundColor: '#fff',
+          backgroundColor: Color.background,
           paddingHorizontal: 24,
         }}>
         <Box
           justifyContent={'space-between'}
           flexDirection={'row'}
+          alignItems="center"
           mt={5}
           mb={5}>
-          <Box />
-          <Text fontSize={16} fontFamily={'Inter'} fontWeight={500}>
-            Profile
+          <Text
+            color={Color.main}
+            fontSize={11}
+            fontWeight={800}
+            letterSpacing={2}>
+            VOTRE ESPACE
           </Text>
           <Pressable onPress={() => navigation.navigate('MySettings')}>
-            <SvgSettings />
+            <Box bg="white" borderRadius={16} p={3} shadow={1}>
+              <SvgSettings />
+            </Box>
           </Pressable>
         </Box>
-        <Flex justifyContent={'center'} alignItems={'center'}>
+        <Flex
+          justifyContent={'center'}
+          alignItems={'center'}
+          bg={Color.main}
+          borderRadius={24}
+          py={6}
+          shadow={3}>
           <View style={{position: 'relative'}}>
             <Avatar
               bg="lightBlue.400"
               source={{
                 uri:
-                  photoUri ??
-                  'https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80',
+                  photoUri ||
+                  currentUser?.userPhoto ||
+                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&q=80',
               }}
               size="2xl"
             />
@@ -217,39 +220,64 @@ export default function Profil({navigation}: any) {
               </TouchableOpacity>
             )}
           </View>
-          <Text fontSize={15} fontFamily={'Inter'} fontWeight={400}>
+          <Text
+            mt={3}
+            color="white"
+            fontSize={20}
+            fontFamily={'Inter'}
+            fontWeight={700}>
             {`${currentUser?.firstName ?? '-'} ${currentUser?.lastName ?? '-'}`}
           </Text>
           <Text
             fontSize={12}
             fontFamily={'Inter'}
             fontWeight={400}
-            color={'#868889'}>
+            color={'#D9D2ED'}>
             {currentUser?.userMail}
           </Text>
         </Flex>
-        <Pressable onPress={() => navigation.navigate('MyReservation')}>
-          <Box
-            my={5}
-            flexDirection={'row'}
-            bgColor={'#fff'}
-            justifyContent={'space-between'}
-            px={15}
-            py={13}
-            borderWidth={1}
-            borderColor={'#9E91DA'}
-            borderRadius={8}>
-            <Text
-              fontSize={12}
-              fontFamily={'Inter'}
-              fontWeight={400}
-              color={'#090A0A'}>
-              Mes réservations
-            </Text>
-            <ChevronRightIcon />
-          </Box>
-        </Pressable>
-        <Flex gap={3} mt={2}>
+        <Box mt={5} bg={Color.main} borderRadius={22} p={5} overflow="hidden" shadow={2}>
+          <Box position="absolute" width={32} height={32} borderRadius={80} bg="rgba(255,255,255,.08)" right={-8} top={-8} />
+          <Flex direction="row" justifyContent="space-between" alignItems="flex-start">
+            <Box flex={1} pr={4}>
+              <Text color="#FFCA79" fontSize={10} fontWeight={900} letterSpacing={1.4}>MES AVANTAGES</Text>
+              <Text color="white" fontSize={22} fontWeight={900} mt={2}>Fidélité Barmej</Text>
+              <Text color="#DDD4EE" fontSize={11} mt={1}>Vos visites terminées vous rapprochent de nouvelles récompenses.</Text>
+            </Box>
+            <Box width={12} height={12} borderRadius={18} bg="rgba(255,255,255,.14)" alignItems="center" justifyContent="center"><Text fontSize={21}>★</Text></Box>
+          </Flex>
+          {(loyaltyAccounts ?? []).length ? (loyaltyAccounts ?? []).slice(0, 3).map(account => (
+            <Box key={account.placeId} mt={4} bg="rgba(255,255,255,.11)" borderRadius={16} p={3}>
+              <Flex direction="row" justifyContent="space-between"><Text color="white" fontWeight={800}>{account.placeName}</Text><Text color="#FFCA79" fontWeight={900}>{account.balance} pts</Text></Flex>
+              <Box height={2} bg="rgba(255,255,255,.18)" borderRadius={5} mt={3} overflow="hidden"><Box width={`${account.progress}%`} height="100%" bg="#FFCA79" /></Box>
+              <Text color="#DDD4EE" fontSize={9} mt={2}>{account.nextReward ? `${account.nextReward.name} · ${account.nextReward.pointsCost} points` : `${account.rewards.length} récompense(s) disponible(s)`}</Text>
+            </Box>
+          )) : <Box mt={4} bg="rgba(255,255,255,.1)" borderRadius={16} p={4}><Text color="white" fontWeight={800}>Vos premiers points apparaîtront ici</Text><Text color="#DDD4EE" fontSize={10} mt={1}>Réservez puis validez votre présence chez un établissement partenaire.</Text></Box>}
+        </Box>
+        <Flex mt={5} bg="white" borderRadius={22} p={4} shadow={1}>
+          <Flex
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={4}>
+            <Box>
+              <Text color={Color.text} fontSize={18} fontWeight={800}>
+                Informations personnelles
+              </Text>
+              <Text color={Color.muted} fontSize={11} mt={1}>
+                Vos coordonnées et préférences
+              </Text>
+            </Box>
+            {!editMode && (
+              <Pressable onPress={() => setEditMode(true)}>
+                <Box bg={Color.mainLight} px={3} py={2} borderRadius={14}>
+                  <Text color={Color.main} fontSize={11} fontWeight={800}>
+                    MODIFIER
+                  </Text>
+                </Box>
+              </Pressable>
+            )}
+          </Flex>
           {formList.map(
             (el, _) =>
               el.name !== 'confirmPassword' &&
@@ -260,15 +288,20 @@ export default function Profil({navigation}: any) {
                   render={({field: {onChange, onBlur, value}}) => (
                     <FormControl
                       isInvalid={!!errors?.[el.name as EnumInputs]?.message}>
-                      <Text bold mb={2}>
-                        {el.placeholder} :
+                      <Text
+                        color={Color.muted}
+                        fontSize={12}
+                        fontWeight={700}
+                        mb={2}>
+                        {el.placeholder}
                       </Text>
 
                       <Input
                         type={'text'}
-                        backgroundColor={'#F9F9F9'}
-                        borderColor={'#F9F9F9'}
-                        borderRadius={'10px'}
+                        height={50}
+                        backgroundColor={editMode ? '#FFFFFF' : '#F8F7FB'}
+                        borderColor={Color.border}
+                        borderRadius={14}
                         _focus={{
                           borderColor: Color.main,
                           backgroundColor: 'rgba(241, 241, 254, 1)',
@@ -276,7 +309,7 @@ export default function Profil({navigation}: any) {
                         onChangeText={onChange}
                         value={value?.toString()}
                         onBlur={onBlur}
-                        isReadOnly={!editMode}
+                        isReadOnly={!editMode || el.name === 'userMail'}
                       />
                       <FormControl.ErrorMessage
                         leftIcon={<WarningOutlineIcon size="xs" />}>
@@ -293,8 +326,8 @@ export default function Profil({navigation}: any) {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <FormControl isInvalid={!!errors?.dateOfBirth?.message}>
-                <Text bold mb={2}>
-                  {'Date de naissance'} :
+                <Text color={Color.muted} fontSize={12} fontWeight={700} mb={2}>
+                  Date de naissance
                 </Text>
                 <DatePickerForm
                   onChange={onChange}
@@ -315,41 +348,83 @@ export default function Profil({navigation}: any) {
             control={control}
             render={({field: {onChange, value}}) => (
               <FormControl isInvalid={!!errors?.userGender?.message}>
-                <Text bold mb={2}>
-                  {'Genre'} :
+                <Text color={Color.muted} fontSize={12} fontWeight={700} mb={2}>
+                  Genre
                 </Text>
-                {editMode ? (
-                  <Select
-                    backgroundColor={'#F9F9F9'}
-                    borderColor={'#F9F9F9'}
-                    borderRadius={'10px'}
-                    selectedValue={value}
-                    minWidth="200"
-                    accessibilityLabel="Choose Service"
-                    placeholder="Choose Service"
-                    _selectedItem={{
-                      endIcon: <CheckIcon size="5" color={'#45377A'} />,
-                    }}
+                <Pressable
+                  disabled={!editMode}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setGenderSelectorOpen(true);
+                  }}>
+                  <Flex
+                    height={50}
                     mt={1}
-                    onValueChange={itemValue => onChange(itemValue)}>
-                    <Select.Item label="Femme" value="W" />
-                    <Select.Item label="Homme" value="H" />
-                    <Select.Item label="Autre" value="O" />
-                  </Select>
-                ) : (
-                  <Input
-                    type={'text'}
-                    backgroundColor={'#F9F9F9'}
-                    borderColor={'#F9F9F9'}
-                    borderRadius={'10px'}
-                    _focus={{
-                      borderColor: Color.main,
-                      backgroundColor: 'rgba(241, 241, 254, 1)',
-                    }}
-                    value={_handleGender(value)}
-                    isReadOnly={true}
-                  />
-                )}
+                    px={4}
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    backgroundColor={editMode ? '#FFFFFF' : '#F8F7FB'}
+                    borderWidth={1}
+                    borderColor={Color.border}
+                    borderRadius={14}
+                    opacity={editMode ? 1 : 0.65}>
+                    <Text color={value ? Color.text : Color.muted}>
+                      {value === 'W'
+                        ? 'Femme'
+                        : value === 'H'
+                        ? 'Homme'
+                        : value === 'O'
+                        ? 'Autre'
+                        : 'Non renseigné'}
+                    </Text>
+                    <ChevronDownIcon color={Color.main} size="sm" />
+                  </Flex>
+                </Pressable>
+                <Actionsheet
+                  isOpen={genderSelectorOpen}
+                  onClose={() => setGenderSelectorOpen(false)}>
+                  <Actionsheet.Content borderTopRadius={24}>
+                    <Text
+                      color={Color.text}
+                      fontSize={17}
+                      fontWeight={800}
+                      py={3}>
+                      Sélectionner le genre
+                    </Text>
+                    {[
+                      {label: 'Femme', value: 'W'},
+                      {label: 'Homme', value: 'H'},
+                      {label: 'Autre', value: 'O'},
+                    ].map(option => (
+                      <Actionsheet.Item
+                        key={option.value}
+                        bg={
+                          value === option.value
+                            ? Color.mainLight
+                            : 'transparent'
+                        }
+                        onPress={() => {
+                          onChange(option.value);
+                          setGenderSelectorOpen(false);
+                        }}>
+                        <Flex
+                          direction="row"
+                          width="100%"
+                          justifyContent="space-between">
+                          <Text
+                            color={Color.text}
+                            fontWeight={value === option.value ? 800 : 500}>
+                            {option.label}
+                          </Text>
+                          {value === option.value && (
+                            <Text color={Color.main}>✓</Text>
+                          )}
+                        </Flex>
+                      </Actionsheet.Item>
+                    ))}
+                  </Actionsheet.Content>
+                </Actionsheet>
                 <FormControl.ErrorMessage
                   leftIcon={<WarningOutlineIcon size="xs" />}>
                   {errors?.userGender?.message}
@@ -359,15 +434,47 @@ export default function Profil({navigation}: any) {
             name={'userGender'}
           />
         </Flex>
+        {!editMode && (
+          <Box mt={6}>
+            <Text color={Color.text} fontSize={19} fontWeight={800} mb={3}>
+              Activité du compte
+            </Text>
+              <Pressable onPress={() => navigation.navigate('Notifications')}>
+                <Flex direction="row" justifyContent="space-between" alignItems="center" bg="white" borderRadius={18} p={4} mb={3} shadow={1}>
+                  <Box flex={1}>
+                    <Text color={Color.text} fontWeight={800}>Notifications</Text>
+                    <Text color={Color.muted} fontSize={12} mt={1}>Confirmations, changements et rappels</Text>
+                  </Box>
+                  <Text color={Color.main} fontSize={22}>›</Text>
+                </Flex>
+              </Pressable>
+          </Box>
+        )}
         {editMode && (
-          <Button
-            borderRadius={'5px'}
-            mt={5}
-            backgroundColor={'#F3F0FF'}
-            _text={{color: Color.main}}
-            onPress={handleSubmit(onSubmit)}>
-            Confirmer
-          </Button>
+          <Flex direction="row" justifyContent="space-between" mt={5}>
+            <Button
+              width="34%"
+              height={52}
+              borderRadius={16}
+              variant="outline"
+              borderColor={Color.border}
+              _text={{color: Color.text}}
+              onPress={() => {
+                reset(currentUser);
+                setEditMode(false);
+              }}>
+              Annuler
+            </Button>
+            <Button
+              width="62%"
+              height={52}
+              borderRadius={16}
+              backgroundColor={Color.main}
+              _text={{color: 'white', fontWeight: '700'}}
+              onPress={() => void handleSubmit(onSubmit)()}>
+              Enregistrer
+            </Button>
+          </Flex>
         )}
       </ScrollView>
     </KeyboardAvoidingView>

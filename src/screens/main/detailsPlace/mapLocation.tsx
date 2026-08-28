@@ -1,13 +1,11 @@
 import React from 'react';
 import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import {Color} from '../../../helpers/constatn';
-import {StyleSheet, Dimensions} from 'react-native';
+import {StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
   map: {
-    marginTop: 10,
-    borderRadius: 90,
-    height: 150,
+    height: 190,
   },
 });
 
@@ -26,17 +24,22 @@ export default function MapPlaceLocation({
 
   return (
     <MapView
-      showsCompass={true}
+      pointerEvents="none"
+      showsCompass={false}
       customMapStyle={mapStyle}
-      scrollEnabled={true}
-      zoomEnabled={true}
-      showsMyLocationButton={true}
-      followsUserLocation={true}
+      scrollEnabled={false}
+      zoomEnabled={false}
+      rotateEnabled={false}
+      pitchEnabled={false}
+      toolbarEnabled={false}
+      zoomControlEnabled={false}
+      showsMyLocationButton={false}
+      followsUserLocation={false}
       provider={PROVIDER_GOOGLE}
       loadingEnabled={true}
       loadingIndicatorColor={Color.main}
       tintColor={Color.main}
-      showsPointsOfInterest={false}
+      showsPointsOfInterests={false}
       showsBuildings={false}
       style={styles.map}
       region={{

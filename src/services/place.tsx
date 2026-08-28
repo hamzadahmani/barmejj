@@ -20,3 +20,13 @@ export const getPlaceNearMeAPI = async (params: any) => {
   );
   return response.data;
 };
+
+export const getFeaturedPlacesAPI = async () => {
+  const response = await axios.get<any>('getFeaturedPlaces');
+  return response.data;
+};
+
+export const searchPlacesCatalogAPI = async (query = '') => {
+  const response = await axios.get<any>(`search?query=${encodeURIComponent(query)}&sort=name`);
+  return response.data;
+};

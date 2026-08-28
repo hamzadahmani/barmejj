@@ -1,0 +1,72 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - "src/**"
+      - "App.tsx"
+      - "index.js"
+      - "package.json"
+      - "package-lock.json"
+      - "babel.config.js"
+      - "metro.config.js"
+      - ".github/workflows/android-release.yml"
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Build release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Configure Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Configure Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android NDK
+        run: sdkmanager "ndk;27.1.12297006"
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Select online Render API
+        run: npm run api:online
+
+      - name: Build universal release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --build-cache --parallel --max-workers=2
+
+      - name: Prepare downloadable APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk Barmej-release.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Barmej-release-${{ github.run_number }}
+          path: Barmej-release.apk
+          if-no-files-found: error
+          retention-days: 14

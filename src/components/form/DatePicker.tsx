@@ -1,42 +1,60 @@
 import {Button, Flex, Input, Modal} from 'native-base';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import DatePicker, {getFormatedDate} from 'react-native-modern-datepicker';
 import {Color} from '../../helpers/constatn';
 
 export default function DatePickerForm({
   onChange,
   onBlur,
-  disabled = true,
+  value,
+  disable = false,
 }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
-    getFormatedDate(new Date(), 'YYYY-MM-DD'),
+    value || getFormatedDate(new Date(), 'YYYY-MM-DD'),
   );
 
-  const opentPicker = () => {
+  useEffect(() => {
+    if (value) {
+      setSelectedDate(value);
+    }
+  }, [value]);
+
+  const openPicker = () => {
+    if (disable) {
+      return;
+    }
+
     setModalVisible(true);
   };
   return (
     <>
       <Input
         type={'text'}
-        backgroundColor={'#F9F9F9'}
-        borderColor={'#F9F9F9'}
+        backgroundColor={disable ? '#F4F3F7' : '#F9F9F9'}
+        borderColor={disable ? '#E8E5EE' : '#F9F9F9'}
         borderRadius={'10px'}
         _focus={{
           borderColor: Color.main,
           backgroundColor: 'rgba(241, 241, 254, 1)',
         }}
         placeholder={'date de naissance'}
-        onPressIn={opentPicker}
+        onPressIn={disable ? undefined : openPicker}
         value={selectedDate?.toString()}
         onBlur={onBlur}
         editable={false}
         showSoftInputOnFocus={false}
-        isReadOnly={!disabled}
+        isReadOnly
+        isDisabled={disable}
+        opacity={disable ? 1 : undefined}
+        _disabled={{
+          color: Color.text,
+          backgroundColor: '#F4F3F7',
+          opacity: 1,
+        }}
       />
       <Modal
-        isOpen={modalVisible}
+        isOpen={!disable && modalVisible}
         onClose={() => setModalVisible(false)}
         paddingX={10}>
         <DatePicker

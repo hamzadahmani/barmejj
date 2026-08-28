@@ -64,3 +64,17 @@ yarn-error.log
 
 # testing
 /coverage
+
+# Local credentials and generated release artifacts
+Backup-codes-*.txt
+*.jks
+*.aab
+android/app/debug/
+android/app/release/
+
+# Local Android/React Native build caches and generated APKs
+.gradle-rn87/
+.upgrade-check/
+android/.gradle-user/
+android/.kotlin/
+*.apk

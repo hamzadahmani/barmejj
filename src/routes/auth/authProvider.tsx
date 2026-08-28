@@ -1,5 +1,12 @@
-import React, {createContext, useEffect, useState} from 'react';
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedSplash from '../../components/animatedSplash';
 
 export interface AuthContextType {
   userInfo: any;
@@ -12,13 +19,29 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined,
 );
 
-const AuthProvider: React.FC = ({children}) => {
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+const AuthProvider = ({children}: PropsWithChildren) => {
   const [user, setUser] = useState<any>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+    const loadingTimeout = setTimeout(() => {
+      if (active) {
+        setIsLoading(false);
+      }
+    }, 4000);
+
     const loadDataFromStorage = async () => {
+      const startedAt = Date.now();
       try {
         const [token, userDetails] = await Promise.all([
           AsyncStorage.getItem('token'),
@@ -33,14 +56,26 @@ const AuthProvider: React.FC = ({children}) => {
           setUserInfo(JSON.parse(userDetails));
         }
 
-        setIsLoading(false);
       } catch (error) {
         console.error(error);
-        setIsLoading(false);
+      } finally {
+        if (active) {
+          const remaining = Math.max(0, 1650 - (Date.now() - startedAt));
+          if (remaining) {
+            await new Promise(resolve => setTimeout(resolve, remaining));
+          }
+          clearTimeout(loadingTimeout);
+          setIsLoading(false);
+        }
       }
     };
 
     loadDataFromStorage();
+
+    return () => {
+      active = false;
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   const saveToStorage = async (key: string, value: any) => {
@@ -72,8 +107,7 @@ const AuthProvider: React.FC = ({children}) => {
   };
 
   if (isLoading) {
-    // Add a loading indicator or splash screen while checking the authentication state
-    return null;
+    return <AnimatedSplash />;
   }
 
   return (

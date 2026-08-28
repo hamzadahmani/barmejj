@@ -1,12 +1,12 @@
-import React, {useContext, useState} from 'react';
-import {VStack, Divider, Text, Button} from 'native-base';
+import React, {useState} from 'react';
+import {VStack, Text, Button, Box, ChevronRightIcon} from 'native-base';
 import {TouchableOpacity} from 'react-native';
 import {Color} from '../../../../helpers/constatn';
-import {AuthContext} from '../../../../routes/auth/authProvider';
+import {useAuth} from '../../../../routes/auth/authProvider';
 import DeleteAccountScreen from './deleteAccount';
 
-function SettingsScreen() {
-  const {logout} = useContext(AuthContext) || {};
+function SettingsScreen({navigation}: {navigation: any}) {
+  const {logout} = useAuth();
   const [isModalVisible, setModalVisible] = useState(false);
 
   const toggleModal = () => {
@@ -14,45 +14,76 @@ function SettingsScreen() {
   };
 
   return (
-    <VStack p={5} space={6} w="100%" backgroundColor={'#fff'} h={'100%'}>
-      <TouchableOpacity>
-        <Text
-          fontFamily={'Poppins'}
-          color={'#15141F'}
-          fontWeight={500}
-          fontSize={16}>
-          termes et conditions
-        </Text>
+    <VStack
+      p={5}
+      space={3}
+      w="100%"
+      backgroundColor={Color.background}
+      h={'100%'}>
+      <Text
+        color={Color.main}
+        fontSize={11}
+        fontWeight={800}
+        letterSpacing={2}
+        mt={4}>
+        VOTRE COMPTE
+      </Text>
+      <Text
+        color={Color.text}
+        fontSize={30}
+        lineHeight={38}
+        fontWeight={800}
+        mb={3}>
+        Paramètres
+      </Text>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('TermsAndConditions')}>
+        <Box
+          bg="white"
+          p={5}
+          borderRadius={16}
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center">
+          <Text color={Color.text} fontWeight={600} fontSize={15}>
+            Termes et conditions
+          </Text>
+          <ChevronRightIcon />
+        </Box>
       </TouchableOpacity>
-      <Divider />
-      <TouchableOpacity>
-        <Text
-          fontFamily={'Poppins'}
-          color={'#15141F'}
-          fontWeight={500}
-          fontSize={16}>
-          politique
-        </Text>
+      <TouchableOpacity onPress={() => navigation.navigate('policy')}>
+        <Box
+          bg="white"
+          p={5}
+          borderRadius={16}
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center">
+          <Text color={Color.text} fontWeight={600} fontSize={15}>
+            Politique de confidentialité
+          </Text>
+          <ChevronRightIcon />
+        </Box>
       </TouchableOpacity>
-      <Divider />
       <TouchableOpacity>
-        <Text
-          fontFamily={'Poppins'}
-          color={'#a83258'}
-          fontWeight={500}
-          fontSize={16}
-          onPress={toggleModal}>
-          Supprimer mon compte
-        </Text>
+        <Box bg="#FFF0F1" p={5} borderRadius={16}>
+          <Text
+            color="#B42335"
+            fontWeight={600}
+            fontSize={15}
+            onPress={toggleModal}>
+            Supprimer mon compte
+          </Text>
+        </Box>
       </TouchableOpacity>
-      <Divider />
 
       <Button
-        borderRadius={'5px'}
+        height={52}
+        borderRadius={16}
         mt={5}
-        backgroundColor={'#F3F0FF'}
-        _text={{color: Color.main}}
-        onPress={() => logout()}>
+        backgroundColor={Color.main}
+        _text={{color: 'white'}}
+        onPress={logout}>
         Déconnexion
       </Button>
       <DeleteAccountScreen
