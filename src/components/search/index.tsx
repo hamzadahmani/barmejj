@@ -1,13 +1,11 @@
 import {useQuery} from '@tanstack/react-query';
 import {
   Box,
-  CloseIcon,
   Divider,
   Flex,
   Image,
   Input,
   Pressable,
-  SearchIcon,
   ScrollView,
   Spinner,
   Text,
@@ -17,6 +15,7 @@ import {Keyboard} from 'react-native';
 import {Color} from '../../helpers/constatn';
 import {isOpen} from '../../helpers/functions';
 import {getPlacesBySearch} from '../../services/search';
+import VectorIcon from '../vectorIcon';
 
 export default function SearchBar({navigation}: any) {
   const [query, setQuery] = useState('');
@@ -64,7 +63,7 @@ export default function SearchBar({navigation}: any) {
             borderRadius={12}
             alignItems="center"
             justifyContent="center">
-            <SearchIcon size="sm" color={Color.main} />
+            <VectorIcon name="search" size={18} color={Color.main} />
           </Box>
         }
         InputRightElement={
@@ -72,7 +71,7 @@ export default function SearchBar({navigation}: any) {
             <Spinner mr={4} size="sm" color={Color.main} />
           ) : query ? (
             <Pressable onPress={() => setQuery('')} p={3}>
-              <CloseIcon size="xs" color="#777382" />
+              <VectorIcon name="x" size={16} color="#777382" />
             </Pressable>
           ) : undefined
         }

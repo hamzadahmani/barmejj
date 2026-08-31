@@ -26,7 +26,40 @@ export const getFeaturedPlacesAPI = async () => {
   return response.data;
 };
 
+export const getVideoFeedAPI = async ({
+  pageParam,
+  queryKey,
+}: {pageParam?: string | null; queryKey?: readonly unknown[]} = {}) => {
+  const options = (queryKey?.[1] as {
+    limit?: number;
+    mode?: string;
+    latitude?: number;
+    longitude?: number;
+    keyword?: string;
+  }) ?? {};
+  const response = await axios.get<any>('v1/feed', {
+    params: {
+      cursor: pageParam || undefined,
+      limit: options.limit ?? 8,
+      mode: options.mode ?? 'for-you',
+      latitude: options.latitude,
+      longitude: options.longitude,
+      keyword: options.keyword,
+    },
+  });
+  return response.data;
+};
+
+export const trackFeedEventsAPI = async (
+  events: Array<Record<string, unknown>>,
+) => {
+  const response = await axios.post('v1/feed/events/batch', {events});
+  return response.data;
+};
+
 export const searchPlacesCatalogAPI = async (query = '') => {
-  const response = await axios.get<any>(`search?query=${encodeURIComponent(query)}&sort=name`);
+  const response = await axios.get<any>(
+    `search?query=${encodeURIComponent(query)}&sort=name`,
+  );
   return response.data;
 };

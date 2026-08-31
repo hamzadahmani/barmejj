@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedSplash from '../../components/animatedSplash';
+import {setAccessToken} from '../../services/authToken';
 
 export interface AuthContextType {
   userInfo: any;
@@ -49,7 +50,9 @@ const AuthProvider = ({children}: PropsWithChildren) => {
         ]);
 
         if (token) {
-          setUser({token: JSON.parse(token)});
+          const restoredToken = JSON.parse(token);
+          setAccessToken(restoredToken);
+          setUser({token: restoredToken});
         }
 
         if (userDetails) {
@@ -89,6 +92,7 @@ const AuthProvider = ({children}: PropsWithChildren) => {
   const login = (userData: any) => {
     const {token, ...rest} = userData;
 
+    setAccessToken(token);
     setUser({token});
     setUserInfo(rest);
 
@@ -99,6 +103,7 @@ const AuthProvider = ({children}: PropsWithChildren) => {
   const logout = async () => {
     try {
       await AsyncStorage.multiRemove(['token', 'userDetails']);
+      setAccessToken(null);
       setUser(null);
       setUserInfo(null);
     } catch (error) {

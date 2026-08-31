@@ -1,0 +1,6 @@
+flows:
+  - "flows/*.yaml"
+
+executionOrder:
+  continueOnFailure: false
+

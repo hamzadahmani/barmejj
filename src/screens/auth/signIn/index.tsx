@@ -117,6 +117,8 @@ export default function LoginScreen({navigation}: any) {
               <FormControl isInvalid={!!errors.email?.message}>
                 <FormControl.Label>Adresse e-mail</FormControl.Label>
                 <Input
+                  testID="login-email"
+                  accessibilityLabel="Adresse e-mail de connexion"
                   placeholder="votre@email.com"
                   InputLeftElement={<SvgComponentUser />}
                   keyboardType="email-address"
@@ -153,6 +155,8 @@ export default function LoginScreen({navigation}: any) {
               <FormControl isInvalid={!!errors?.password?.message}>
                 <FormControl.Label mt={3}>Mot de passe</FormControl.Label>
                 <Input
+                  testID="login-password"
+                  accessibilityLabel="Mot de passe de connexion"
                   placeholder="Votre mot de passe"
                   InputLeftElement={<SvgComponentPassword />}
                   InputRightElement={
@@ -190,6 +194,8 @@ export default function LoginScreen({navigation}: any) {
         </Box>
         <Box mt={5}>
           <Button
+            testID="login-submit"
+            accessibilityLabel="Se connecter à Barmej"
             height={52}
             borderRadius={16}
             backgroundColor={Color.main}

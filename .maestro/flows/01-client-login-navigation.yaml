@@ -1,0 +1,24 @@
+appId: com.barmej
+name: Client - connexion
+env:
+  CLIENT_EMAIL: sarra@barmej.app
+  CLIENT_PASSWORD: Client123!
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login-email
+    timeout: 30000
+- tapOn:
+    id: login-email
+- inputText: ${CLIENT_EMAIL}
+- tapOn:
+    id: login-password
+- inputText: ${CLIENT_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: login-submit
+- extendedWaitUntil:
+    visible: Explorer
+    timeout: 30000

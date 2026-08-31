@@ -10,10 +10,7 @@ import {
 } from 'native-base';
 import React, {useEffect, useState} from 'react';
 import {Color, buildLink} from '../../../helpers/constatn';
-import {TouchableOpacity, Linking, Platform, RefreshControl, Share, StyleSheet} from 'react-native';
-import {
-  StyledTitle,
-} from './styles';
+import {Linking, Platform, RefreshControl, Share, StyleSheet} from 'react-native';
 import ImageView from 'react-native-image-viewing';
 import {useQuery} from '@tanstack/react-query';
 import LoadingSpinner from '../../../components/Loader';

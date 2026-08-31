@@ -19,6 +19,11 @@ import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import AppErrorBoundary from './src/components/AppErrorBoundary';
 
 const queryClient = new QueryClient({
+  logger: {
+    log: () => undefined,
+    warn: () => undefined,
+    error: () => undefined,
+  },
   defaultOptions: {queries: {retry: false, staleTime: 5000}},
 });
 
@@ -34,7 +39,7 @@ function App(): React.JSX.Element {
                 <NavigationContainer linking={linking as any}>
                   <AxiosInterceptor>
                     <SafeAreaView
-                      edges={['top', 'bottom']}
+                      edges={['top']}
                       style={{flex: 1, backgroundColor: '#F7F7FB'}}>
                       <MainStack />
                     </SafeAreaView>

@@ -5,6 +5,42 @@ jest.mock(
 
 require('react-native-gesture-handler/jestSetup');
 
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  watchPosition: jest.fn(),
+  clearWatch: jest.fn(),
+  stopObserving: jest.fn(),
+  requestAuthorization: jest.fn(),
+  setRNConfiguration: jest.fn(),
+}));
+
+jest.mock('react-native-image-picker', () => ({
+  launchImageLibrary: jest.fn(),
+  launchCamera: jest.fn(),
+}));
+
+jest.mock('react-native-image-viewing', () => 'ImageViewing');
+
+jest.mock('react-native-maps', () => ({
+  __esModule: true,
+  default: 'MapView',
+  Marker: 'Marker',
+  PROVIDER_GOOGLE: 'google',
+}));
+
+jest.mock('react-native-qrcode-svg', () => 'QRCode');
+jest.mock('react-native-video', () => 'Video');
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: jest.fn(() => ({
+    isConnected: true,
+    isInternetReachable: true,
+    type: 'wifi',
+    details: {},
+  })),
+  addEventListener: jest.fn(() => jest.fn()),
+  fetch: jest.fn(() => Promise.resolve({isConnected: true})),
+}));
+
 jest.mock('react-native-modern-datepicker', () => ({
   __esModule: true,
   default: 'DatePicker',

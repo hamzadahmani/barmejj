@@ -2,15 +2,16 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import React, {useEffect, useState} from 'react';
 import {Keyboard, StyleSheet, Text, View} from 'react-native';
 import Svg, {Circle, Path, Rect} from 'react-native-svg';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import StackProfil from '../profil';
 import ExperienceStack from './experienceStack';
 import StackHome from './homeStack';
-import MapStack from './mapStack';
+import VideoStack from './videoStack';
 import ReservationStack from './reservationStack';
 
 const Tab = createBottomTabNavigator();
 
-type IconName = 'home' | 'map' | 'calendar' | 'experience' | 'profile';
+type IconName = 'home' | 'video' | 'calendar' | 'experience' | 'profile';
 
 const NavigationIcon = ({name, color}: {name: IconName; color: string}) => {
   const common = {
@@ -24,11 +25,8 @@ const NavigationIcon = ({name, color}: {name: IconName; color: string}) => {
       {name === 'home' && (
         <Path {...common} d="M3 10.8 12 3l9 7.8V21h-6v-6H9v6H3V10.8Z" />
       )}
-      {name === 'map' && (
-        <>
-          <Path {...common} d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" />
-          <Path {...common} d="M9 3v15M15 6v15" />
-        </>
+      {name === 'video' && (
+        <><Rect {...common} x="3" y="4" width="18" height="16" rx="5"/><Path {...common} d="m10 8 6 4-6 4V8Z"/></>
       )}
       {name === 'calendar' && (
         <>
@@ -72,6 +70,7 @@ const tabIcon = (icon: IconName, label: string, focused: boolean) => (
 
 export default function TabNavigation() {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () =>
@@ -97,7 +96,7 @@ export default function TabNavigation() {
           display: keyboardVisible ? 'none' : 'flex',
           height: 64,
           marginHorizontal: 12,
-          bottom: 8,
+          bottom: insets.bottom + 8,
           paddingTop: 3,
           paddingBottom: 3,
           backgroundColor: '#45377A',
@@ -123,18 +122,26 @@ export default function TabNavigation() {
         name="Explorer"
         component={StackHome}
         options={{
+          tabBarButtonTestID: 'tab-explorer',
+          tabBarAccessibilityLabel: 'Ouvrir Explorer',
           tabBarIcon: ({focused}) => tabIcon('home', 'Explorer', focused),
         }}
       />
       <Tab.Screen
-        name="Carte"
-        component={MapStack}
-        options={{tabBarIcon: ({focused}) => tabIcon('map', 'Carte', focused)}}
+        name="Videos"
+        component={VideoStack}
+        options={{
+          tabBarButtonTestID: 'tab-videos',
+          tabBarAccessibilityLabel: 'Ouvrir Vidéos',
+          tabBarIcon: ({focused}) => tabIcon('video', 'Vidéos', focused),
+        }}
       />
       <Tab.Screen
         name="Reservations"
         component={ReservationStack}
         options={{
+          tabBarButtonTestID: 'tab-reservations',
+          tabBarAccessibilityLabel: 'Ouvrir Réservations',
           tabBarIcon: ({focused}) =>
             tabIcon('calendar', 'Réservations', focused),
         }}
@@ -143,6 +150,8 @@ export default function TabNavigation() {
         name="Expérience Barmej"
         component={ExperienceStack}
         options={{
+          tabBarButtonTestID: 'tab-experience',
+          tabBarAccessibilityLabel: 'Ouvrir Expérience',
           tabBarIcon: ({focused}) => tabIcon('experience', 'Expérience', focused),
         }}
       />
@@ -150,6 +159,8 @@ export default function TabNavigation() {
         name="Profile"
         component={StackProfil}
         options={{
+          tabBarButtonTestID: 'tab-profile',
+          tabBarAccessibilityLabel: 'Ouvrir Profil',
           tabBarIcon: ({focused}) => tabIcon('profile', 'Profil', focused),
         }}
       />

@@ -1,0 +1,26 @@
+appId: com.barmej
+name: Client - navigation principale
+---
+- launchApp:
+    clearState: false
+- tapOn:
+    id: tab-explorer
+- assertVisible: Explorer
+- tapOn:
+    id: tab-videos
+- extendedWaitUntil:
+    visible: Dismiss
+    timeout: 10000
+- tapOn: Dismiss
+- extendedWaitUntil:
+    visible: Pour vous
+    timeout: 15000
+- tapOn:
+    id: tab-reservations
+- assertVisible: Mes réservations
+- tapOn:
+    id: tab-experience
+- assertVisible: Expérience Barmej
+- tapOn:
+    id: tab-profile
+- takeScreenshot: client-navigation-ok

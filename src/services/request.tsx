@@ -1,9 +1,9 @@
 import axios from 'axios';
-import {useAuth} from '../routes/auth/authProvider';
 import React, {PropsWithChildren, useCallback, useEffect} from 'react';
 import {useToast} from 'native-base';
 import Toast from '../components/toast';
 import {API_URI} from '../config/api';
+import {getAccessToken} from './authToken';
 
 const instance = axios.create({
   baseURL: API_URI + '/',
@@ -15,9 +15,7 @@ const instance = axios.create({
 });
 
 const AxiosInterceptor = ({children}: PropsWithChildren) => {
-  const {user} = useAuth();
   const toast = useToast();
-  const accessToken = user?.token;
 
   const errInterceptor = useCallback(
     async (error: any) => {
@@ -41,6 +39,7 @@ const AxiosInterceptor = ({children}: PropsWithChildren) => {
 
   useEffect(() => {
     const requestInterceptor = instance.interceptors.request.use(config => {
+      const accessToken = getAccessToken();
       if (
         !config.headers.Authorization &&
         accessToken &&
@@ -59,7 +58,7 @@ const AxiosInterceptor = ({children}: PropsWithChildren) => {
       instance.interceptors.request.eject(requestInterceptor);
       instance.interceptors.response.eject(responseInterceptor);
     };
-  }, [accessToken, errInterceptor]);
+  }, [errInterceptor]);
 
   return <>{children}</>;
 };
