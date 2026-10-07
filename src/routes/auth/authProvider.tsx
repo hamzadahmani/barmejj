@@ -7,12 +7,21 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedSplash from '../../components/animatedSplash';
-import {setAccessToken} from '../../services/authToken';
+import {
+  expireSession,
+  getRefreshToken,
+  setAccessToken,
+  setRefreshToken,
+  subscribeToSessionExpiration,
+} from '../../services/authToken';
+import request from '../../services/request';
+import {useQueryClient} from '@tanstack/react-query';
 
 export interface AuthContextType {
   userInfo: any;
   user: any;
   login: (userData: any) => void;
+  updateUserInfo: (userData: any) => void;
   logout: () => void;
 }
 
@@ -29,6 +38,7 @@ export const useAuth = () => {
 };
 
 const AuthProvider = ({children}: PropsWithChildren) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,8 +54,9 @@ const AuthProvider = ({children}: PropsWithChildren) => {
     const loadDataFromStorage = async () => {
       const startedAt = Date.now();
       try {
-        const [token, userDetails] = await Promise.all([
+        const [token, storedRefreshToken, userDetails] = await Promise.all([
           AsyncStorage.getItem('token'),
+          AsyncStorage.getItem('refreshToken'),
           AsyncStorage.getItem('userDetails'),
         ]);
 
@@ -54,11 +65,11 @@ const AuthProvider = ({children}: PropsWithChildren) => {
           setAccessToken(restoredToken);
           setUser({token: restoredToken});
         }
+        if (storedRefreshToken) setRefreshToken(JSON.parse(storedRefreshToken));
 
         if (userDetails) {
           setUserInfo(JSON.parse(userDetails));
         }
-
       } catch (error) {
         console.error(error);
       } finally {
@@ -80,6 +91,18 @@ const AuthProvider = ({children}: PropsWithChildren) => {
       clearTimeout(loadingTimeout);
     };
   }, []);
+  useEffect(
+    () =>
+      subscribeToSessionExpiration(() => {
+        queryClient.clear();
+        AsyncStorage.removeMany(['token', 'refreshToken', 'userDetails']).catch(
+          console.error,
+        );
+        setUser(null);
+        setUserInfo(null);
+      }),
+    [queryClient],
+  );
 
   const saveToStorage = async (key: string, value: any) => {
     try {
@@ -90,25 +113,36 @@ const AuthProvider = ({children}: PropsWithChildren) => {
   };
 
   const login = (userData: any) => {
-    const {token, ...rest} = userData;
+    const {token, refreshToken: newRefreshToken, ...rest} = userData;
 
+    queryClient.clear();
     setAccessToken(token);
+    setRefreshToken(newRefreshToken);
     setUser({token});
     setUserInfo(rest);
 
     saveToStorage('token', token);
+    saveToStorage('refreshToken', newRefreshToken);
     saveToStorage('userDetails', rest);
   };
 
   const logout = async () => {
     try {
-      await AsyncStorage.multiRemove(['token', 'userDetails']);
-      setAccessToken(null);
-      setUser(null);
-      setUserInfo(null);
+      const currentRefreshToken = getRefreshToken();
+      if (currentRefreshToken)
+        request
+          .post('/auth/logout', {refreshToken: currentRefreshToken})
+          .catch(() => undefined);
+      await AsyncStorage.removeMany(['token', 'refreshToken', 'userDetails']);
+      expireSession();
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const updateUserInfo = (userData: any) => {
+    setUserInfo(userData);
+    saveToStorage('userDetails', userData);
   };
 
   if (isLoading) {
@@ -116,7 +150,8 @@ const AuthProvider = ({children}: PropsWithChildren) => {
   }
 
   return (
-    <AuthContext.Provider value={{userInfo, user, login, logout}}>
+    <AuthContext.Provider
+      value={{userInfo, user, login, updateUserInfo, logout}}>
       {children}
     </AuthContext.Provider>
   );

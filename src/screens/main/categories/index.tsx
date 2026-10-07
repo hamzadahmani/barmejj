@@ -1,71 +1,681 @@
+import {queryKeys} from '../../../query/keys';
+import React, {useCallback, useState} from 'react';
+import {
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {useQuery} from '@tanstack/react-query';
-import React from 'react';
-import {Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {RadarArt} from '../../../components/discovery/atmosphere';
+import MoodCard from '../../../components/discovery/moodCard';
+import {
+  DiscoverySkeleton,
+  FadeInView,
+} from '../../../components/discovery/motion';
+import NightArt from '../../../components/discovery/nightArt';
+import {fonts, night, tints} from '../../../components/discovery/theme';
+import OfferCard from '../../../components/discovery/offerCard';
 import SearchBar from '../../../components/search';
-import {Color} from '../../../helpers/constatn';
-import {getCategoriesAPI} from '../../../services/categories';
-import {getFeaturedPlacesAPI} from '../../../services/place';
+import VectorIcon, {VectorIconName} from '../../../components/vectorIcon';
+import {
+  Notice,
+  PlaceRow,
+  Section,
+  DiscoveryDeck,
+} from '../../../components/discovery/sections';
+import {interests} from '../../../helpers/interests';
+import {requestLocation} from '../../../helpers/location';
+import {getDiscovery} from '../../../services/discovery';
 import {getProfilAPI} from '../../../services/profil';
 import {getUpcomingReservationAPI} from '../../../services/reservation';
-import VectorIcon, {VectorIconName} from '../../../components/vectorIcon';
+import {useAuth} from '../../../routes/auth/authProvider';
 
-const categoryIcons:Record<string,VectorIconName>={Restaurants:'utensils',Cafés:'coffee',Sorties:'ticket'};
-const intents:{label:string;icon:VectorIconName}[]=[
-  {label:'Ce soir',icon:'clock'},
-  {label:'En amoureux',icon:'heart'},
-  {label:'Petit budget',icon:'wallet'},
-  {label:'Avec des amis',icon:'users'},
-];
-const greeting=()=>{const h=new Date().getHours();return h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';};
-const shortDate=(value?:string)=>value?new Date(value).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
+const moods = [
+  {label: 'Ce soir', icon: 'clock', caption: 'La ville vous attend'},
+  {label: 'En amoureux', icon: 'heart', caption: 'Juste vous deux'},
+  {label: 'Petit budget', icon: 'wallet', caption: 'Petits prix, grand soir'},
+  {label: 'Avec des amis', icon: 'users', caption: 'À plusieurs, c’est mieux'},
+  {label: 'Sortie calme', icon: 'moon', caption: 'Ralentir un peu'},
+] as const;
 
-export default function ExploreHome({navigation}:any){
-  const {data:categories=[],isRefetching:categoriesRefreshing,refetch:refetchCategories}=useQuery(['getCategoriesAPI'],getCategoriesAPI);
-  const {data:featured=[],isRefetching:featuredRefreshing,refetch:refetchFeatured}=useQuery(['getFeaturedPlaces'],getFeaturedPlacesAPI);
-  const {data:booking,isRefetching:bookingRefreshing,refetch:refetchBooking}=useQuery(['upcomingReservation'],getUpcomingReservationAPI,{refetchOnMount:true});
-  const {data:profile,isRefetching:profileRefreshing,refetch:refetchProfile}=useQuery(['getProfilAPI'],getProfilAPI);
-  const openCategory=(idCategory:number)=>navigation.navigate('HomeScreen',{idCategory});
-  const openPlace=(idPlace:number)=>navigation.navigate('Details',{id:idPlace});
-  const lead=featured[0];
-  return <ScrollView style={s.screen} showsVerticalScrollIndicator={false} contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={categoriesRefreshing||featuredRefreshing||bookingRefreshing||profileRefreshing} onRefresh={()=>{void Promise.all([refetchCategories(),refetchFeatured(),refetchBooking(),refetchProfile()]);}} colors={[Color.main]}/>}>
-    <View style={s.hero}>
-      <View style={s.orbA}/><View style={s.orbB}/>
-      <View style={s.top}><View><Text style={s.hello}>{greeting()},</Text><View style={s.nameRow}><Text style={s.name}>{profile?.firstName||'explorateur'}</Text><VectorIcon name="sparkles" size={16} color="#F4B45E"/></View></View><Pressable onPress={()=>navigation.getParent()?.navigate('Profil')} style={s.avatarBox}>{profile?.userPhoto?<Image source={{uri:profile.userPhoto}} style={s.avatar}/>:<Text style={s.avatarText}>{profile?.firstName?.[0]||'B'}</Text>}<View style={s.online}/></Pressable></View>
-      <Text style={s.kicker}>VOTRE VILLE, VOS ENVIES</Text>
-      <Text style={s.heroTitle}>Quelle sera votre</Text>
-      <Text style={s.heroTitle}>prochaine <Text style={s.heroAccent}>sortie ?</Text></Text>
-      <Text style={s.heroText}>Des adresses choisies selon votre humeur, votre moment et votre budget.</Text>
-      <View style={s.search}><SearchBar navigation={navigation}/></View>
-    </View>
+const greeting = () => {
+  const hour = new Date().getHours();
+  return hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+};
 
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.intentRow}>{intents.map(({label,icon},index)=><Pressable key={label} onPress={()=>navigation.navigate('HomeScreen',{intent:label})} style={({pressed})=>[s.intent,index===0&&s.intentOn,pressed&&s.intentPressed]}><View style={[s.intentIcon,index===0&&s.intentIconOn]}><VectorIcon name={icon} size={16} color={index===0?'#FFFFFF':'#4D3B80'}/></View><Text style={[s.intentLabel,index===0&&s.white]}>{label}</Text></Pressable>)}</ScrollView>
+export default function ExploreHome({navigation}: any) {
+  const {userInfo} = useAuth();
+  const insets = useSafeAreaInsets();
+  const [coordinates, setCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const userId = Number(userInfo?.idUser);
+  const discovery = useQuery({
+    queryKey: [...queryKeys.discovery, userId, coordinates],
+    queryFn: () => getDiscovery(userId, coordinates),
+    enabled: Number.isInteger(userId) && userId > 0,
+    staleTime: 30000,
+  });
+  const profile = useQuery({
+    queryKey: queryKeys.profile,
+    queryFn: getProfilAPI,
+  });
+  const booking = useQuery({
+    queryKey: [...queryKeys.upcomingReservation, userId],
+    queryFn: getUpcomingReservationAPI,
+  });
+  const {refetch: refreshDiscovery} = discovery;
+  const {refetch: refreshBooking} = booking;
+  const {refetch: refreshProfile} = profile;
+  useFocusEffect(
+    useCallback(() => {
+      refreshDiscovery();
+      refreshBooking();
+      refreshProfile();
+    }, [refreshDiscovery, refreshBooking, refreshProfile]),
+  );
+  const openPlace = (id: number) => navigation.navigate('Details', {id});
+  const openTab = (name: string, params?: object) =>
+    navigation.getParent()?.navigate(name, params);
+  const locate = async () => {
+    setLocating(true);
+    setLocationError('');
+    try {
+      setCoordinates(await requestLocation());
+    } catch (error) {
+      setLocationError(
+        error instanceof Error ? error.message : 'Position indisponible.',
+      );
+    } finally {
+      setLocating(false);
+    }
+  };
+  const data = discovery.data;
+  const currentBooking = booking.data;
+  const hasDeck = (data?.forYou.length ?? 0) > 0;
+  const firstName =
+    profile.data?.firstName || userInfo?.firstName || 'explorateur';
 
-    <Pressable onPress={()=>navigation.navigate('NearMe')} style={s.near}><View style={s.nearOrb}/><View style={s.nearIcon}><VectorIcon name="mapPin" size={26} color="#312446"/></View><View style={s.flex}><Text style={s.nearKicker}>AUTOUR DE VOUS</Text><Text style={s.nearTitle}>Voir ce qui est proche</Text><Text style={s.nearText}>Carte en direct · adresses ouvertes</Text></View><View style={s.arrowBox}><VectorIcon name="arrowRight" size={19} color="#FFFFFF"/></View></Pressable>
+  const quickActions: Array<{
+    testID: string;
+    icon: VectorIconName;
+    label: string;
+    caption: string;
+    tint: {bg: string; fg: string};
+    onPress: () => void;
+    a11y?: string;
+  }> = [
+    {
+      testID: 'explorer-map',
+      icon: 'mapPin',
+      label: 'Carte',
+      caption: 'Autour de moi',
+      tint: {bg: 'rgba(201,184,255,0.14)', fg: night.lilac},
+      onPress: () => navigation.navigate('NearMe'),
+      a11y: 'Explorer la carte',
+    },
+    {
+      testID: 'explorer-planner',
+      icon: 'sparkles',
+      label: 'Barmejli',
+      caption: 'Planifier ma sortie',
+      tint: {bg: 'rgba(246,182,92,0.16)', fg: night.gold},
+      onPress: () => openTab('Expérience Barmej', {screen: 'Barmejli'}),
+      a11y: 'Planifier une sortie avec Barmejli',
+    },
+    {
+      testID: 'explorer-favorites',
+      icon: 'heart',
+      label: 'Favoris',
+      caption: 'Mes adresses',
+      tint: {bg: 'rgba(255,159,203,0.14)', fg: '#FF9FCB'},
+      onPress: () => navigation.navigate('FavoriteList'),
+      a11y: 'Mes adresses favorites',
+    },
+  ];
 
-    {booking?<View style={s.section}><Header eyebrow="À VENIR" title="Votre prochain moment" action="Toutes" onPress={()=>navigation.getParent()?.navigate('Reservations')}/><Pressable onPress={()=>navigation.getParent()?.navigate('Reservations')} style={s.booking}>{booking.image?<Image source={{uri:booking.image}} style={s.bookingImage}/>:<View style={s.bookingImage}/>}<View style={s.bookingBody}><View style={s.bookingTop}><View style={[s.status,booking.status==='CONFIRMED'&&s.statusOk]}><Text style={[s.statusLabel,booking.status==='CONFIRMED'&&s.statusLabelOk]}>{booking.status==='CONFIRMED'?'CONFIRMÉE':booking.status==='PROPOSED'?'HORAIRE PROPOSÉ':'EN ATTENTE'}</Text></View><VectorIcon name="arrowRight" size={18} color="#4D3B80"/></View><Text numberOfLines={1} style={s.bookingName}>{booking.placeName}</Text><View style={s.details}><Detail icon="calendar" text={shortDate(booking.reservationDate)}/><Detail icon="clock" text={booking.reservationTime?.substring(0,5)}/><Detail icon="users" text={String(booking.numberOfPersons)}/></View></View></Pressable></View>:null}
+  return (
+    <ScrollView
+      testID="explorer-home"
+      style={s.screen}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{paddingBottom: insets.bottom + 120}}
+      refreshControl={
+        <RefreshControl
+          refreshing={
+            discovery.isRefetching ||
+            booking.isRefetching ||
+            profile.isRefetching
+          }
+          onRefresh={() => {
+            Promise.all([
+              discovery.refetch(),
+              booking.refetch(),
+              profile.refetch(),
+            ]);
+          }}
+          colors={[night.violet]}
+          tintColor={night.gold}
+          progressBackgroundColor={night.white}
+        />
+      }>
+      {/* Héros de nuit : salutation, titre éditorial, recherche et raccourcis */}
+      <View style={[s.hero, hasDeck && s.heroWithDeck]}>
+        <NightArt />
+        <View style={s.top}>
+          <Pressable
+            testID="explorer-profile"
+            accessibilityRole="button"
+            accessibilityLabel="Ouvrir mon profil"
+            onPress={() => openTab('Profile')}
+            style={({pressed}) => [s.avatar, pressed && s.pressed]}>
+            {profile.data?.userPhoto ? (
+              <Image
+                source={{uri: profile.data.userPhoto}}
+                style={s.avatarImage}
+              />
+            ) : (
+              <Text style={s.avatarLetter}>
+                {firstName.charAt(0).toUpperCase()}
+              </Text>
+            )}
+          </Pressable>
+          <View style={s.grow}>
+            <Text style={s.hello}>{greeting()}</Text>
+            <Text numberOfLines={1} style={s.name}>
+              {firstName}
+            </Text>
+          </View>
+          <View style={s.cityPill}>
+            <VectorIcon name="mapPin" size={13} color={night.gold} />
+            <Text style={s.cityText}>Tunisie</Text>
+          </View>
+        </View>
 
-    <View style={s.section}><Header eyebrow="ÉDITION DU JOUR" title="Une adresse à vivre" subtitle="Notre sélection, pas un simple classement"/>
-      {lead?<Pressable onPress={()=>openPlace(lead.idPlace)} style={s.lead}>{lead.image?<Image source={{uri:lead.image}} resizeMode="cover" style={s.coverImage}/>:null}<View style={s.overlay}/><View style={s.leadImage}><View style={s.choice}><Text style={s.choiceText}>CHOIX BARMEJ</Text></View><View style={s.leadCopy}><Text style={s.leadKicker}>{lead.cuisineType||'À DÉCOUVRIR'}</Text><Text numberOfLines={2} style={s.leadTitle}>{lead.placeName}</Text><Text numberOfLines={1} style={s.leadText}>{lead.subTitle||'Une expérience sélectionnée pour vous'}</Text><View style={s.leadBottom}><View style={s.addressRow}><VectorIcon name="mapPin" size={14} color="#E3DDE8"/><Text numberOfLines={1} style={s.address}>{lead.placeAdress||'Tunis'}</Text></View><View style={s.discover}><Text style={s.discoverText}>Découvrir</Text><VectorIcon name="arrowRight" size={14} color="#352744"/></View></View></View></View></Pressable>:null}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.cardRow}>{featured.slice(1,5).map((place:any)=><Pressable key={place.idPlace} onPress={()=>openPlace(place.idPlace)} style={s.placeCard}>{place.image?<Image source={{uri:place.image}} style={s.placeImage}/>:<View style={s.placeImage}/>}<View style={s.placeBody}><Text numberOfLines={1} style={s.placeName}>{place.placeName}</Text><Text numberOfLines={1} style={s.placeText}>{place.subTitle||place.cuisineType||'Adresse Barmej'}</Text><View style={s.placeBottom}><View style={s.ratingRow}>{place.rating?<><VectorIcon name="star" size={12} color="#9A6821"/><Text style={s.placeRating}>{place.rating}</Text></>:<Text style={s.placeRating}>Nouveau</Text>}</View><VectorIcon name="arrowRight" size={16} color="#4D3B80"/></View></View></Pressable>)}</ScrollView>
-    </View>
+        <View style={s.rule}>
+          <View style={s.ruleLine} />
+          <Text style={s.ruleText}>L’ART DE SORTIR</Text>
+        </View>
+        <Text style={s.heroTitle}>
+          Quelle sera votre{'\n'}prochaine <Text style={s.accent}>sortie</Text>{' '}
+          ?
+        </Text>
+        <Text style={s.heroCopy}>
+          Des adresses choisies selon votre humeur, votre moment et votre
+          budget.
+        </Text>
+        <View style={s.search}>
+          <SearchBar navigation={navigation} appearance="pearl" />
+        </View>
 
-    <View style={s.section}><Header eyebrow="EXPLORER" title="Une envie, une catégorie"/><View style={s.grid}>{categories.map((category:any,index:number)=><Pressable key={category.idCategory} onPress={()=>openCategory(category.idCategory)} style={[s.category,index===0&&s.categoryWide]}>{category.image?<View style={s.categoryImage}><Image source={{uri:category.image}} resizeMode="cover" style={s.coverImage}/><View style={s.categoryOverlay}/><View style={s.categoryCopy}><VectorIcon name={categoryIcons[category.categoryName]||'sparkles'} size={24} color="#FFFFFF"/><Text style={s.categoryName}>{category.categoryName}</Text><View style={s.categoryAction}><Text style={s.categoryLink}>Explorer</Text><VectorIcon name="arrowRight" size={13} color="#F1EAF5"/></View></View></View>:<View style={s.categoryFallback}><VectorIcon name={categoryIcons[category.categoryName]||'sparkles'} size={24} color="#FFFFFF"/><Text style={s.categoryName}>{category.categoryName}</Text></View>}</Pressable>)}</View></View>
+        {/* Raccourcis regroupés dans une seule barre en verre */}
+        <View style={s.dock}>
+          {quickActions.map((action, index) => (
+            <React.Fragment key={action.testID}>
+              {index > 0 ? <View style={s.dockDivider} /> : null}
+              <Pressable
+                testID={action.testID}
+                accessibilityRole="button"
+                accessibilityLabel={action.a11y}
+                onPress={action.onPress}
+                style={({pressed}) => [s.dockItem, pressed && s.pressed]}>
+                <View style={[s.dockIcon, {backgroundColor: action.tint.bg}]}>
+                  <VectorIcon
+                    name={action.icon}
+                    size={18}
+                    color={action.tint.fg}
+                  />
+                </View>
+                <Text style={s.dockLabel}>{action.label}</Text>
+                <Text numberOfLines={1} style={s.dockCaption}>
+                  {action.caption}
+                </Text>
+              </Pressable>
+            </React.Fragment>
+          ))}
+        </View>
+      </View>
 
-    <View style={s.quickRow}><Pressable onPress={()=>navigation.navigate('FavoriteList')} style={s.favorite}><View style={s.favoriteIcon}><VectorIcon name="heart" size={22} color="#D85C72"/></View><Text style={s.quickKicker}>VOTRE COLLECTION</Text><Text style={s.quickTitle}>Adresses favorites</Text><Text style={s.quickLink}>Retrouver mes envies</Text></Pressable><Pressable onPress={()=>navigation.getParent()?.navigate('Experience')} style={s.experience}><View style={s.experienceIcon}><VectorIcon name="sparkles" size={22} color="#F4B45E"/></View><Text style={s.experienceKicker}>BARMEJ+</Text><Text style={s.experienceTitle}>Créer une expérience</Text><Text style={s.experienceLink}>Planifier ensemble</Text></Pressable></View>
-  </ScrollView>;
+      {/* La sélection du moment chevauche le héros */}
+      <DiscoveryDeck
+        tone="light"
+        style={s.deckOverlap}
+        places={data?.forYou ?? []}
+        onPlace={openPlace}
+      />
+
+      {/* Prochaine réservation */}
+      {booking.isError ? (
+        <Notice
+          message="Votre prochaine réservation n’a pas pu être chargée."
+          onRetry={() => {
+            booking.refetch();
+          }}
+        />
+      ) : null}
+      {currentBooking ? (
+        <Section eyebrow="VOTRE AGENDA" title="C’est prévu">
+          <Pressable
+            testID="explorer-booking"
+            accessibilityRole="button"
+            onPress={() => openTab('Reservations')}
+            style={({pressed}) => [s.ticket, pressed && s.pressed]}>
+            <View style={s.ticketDate}>
+              <VectorIcon name="ticket" size={20} color={night.ink} />
+              <Text style={s.ticketTime}>
+                {currentBooking.reservationTime?.slice(0, 5)}
+              </Text>
+            </View>
+            <View style={s.ticketNotch} />
+            <View style={s.grow}>
+              <Text numberOfLines={1} style={s.ticketTitle}>
+                {currentBooking.placeName}
+              </Text>
+              <Text style={s.ticketMeta}>
+                {currentBooking.reservationDate?.slice(0, 10)} ·{' '}
+                {currentBooking.numberOfPersons} pers.
+              </Text>
+              <View style={s.ticketLinkRow}>
+                <Text style={s.ticketLink}>Voir mes réservations</Text>
+                <VectorIcon name="arrowRight" size={13} color={night.gold} />
+              </View>
+            </View>
+          </Pressable>
+        </Section>
+      ) : null}
+
+      {/* Catégories en puces */}
+      <Section eyebrow="PAR ENVIE" title="Envie de…">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.bleed}
+          contentContainerStyle={s.categories}>
+          {interests.map((interest, index) => {
+            const tint = tints[index % tints.length];
+            return (
+              <Pressable
+                key={interest.key}
+                testID={`interest-${interest.key}`}
+                accessibilityRole="button"
+                accessibilityLabel={`Explorer ${interest.label}`}
+                onPress={() =>
+                  navigation.navigate('HomeScreen', {interest: interest.key})
+                }
+                style={({pressed}) => [s.interest, pressed && s.pressed]}>
+                <View style={[s.interestIcon, {backgroundColor: tint.bg}]}>
+                  <VectorIcon name={interest.icon} size={17} color={tint.fg} />
+                </View>
+                <Text numberOfLines={1} style={s.interestText}>
+                  {interest.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </Section>
+
+      {/* Humeurs */}
+      <Section eyebrow="VOTRE HUMEUR" title="Selon votre humeur">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.bleed}
+          contentContainerStyle={s.moods}>
+          {moods.map((mood, index) => (
+            <FadeInView key={mood.label} delay={index * 70}>
+              <MoodCard
+                index={index}
+                testID={`mood-${mood.label}`}
+                label={mood.label}
+                caption={mood.caption}
+                icon={mood.icon}
+                onPress={() =>
+                  navigation.navigate('HomeScreen', {intent: mood.label})
+                }
+              />
+            </FadeInView>
+          ))}
+        </ScrollView>
+      </Section>
+
+      {profile.isError ? (
+        <Notice
+          message="Vos préférences n’ont pas pu être actualisées."
+          onRetry={() => {
+            profile.refetch();
+          }}
+        />
+      ) : null}
+      {discovery.isLoading ? (
+        <DiscoverySkeleton message="Nous préparons vos découvertes…" />
+      ) : null}
+      {discovery.isError ? (
+        <Notice
+          message="Impossible de charger vos découvertes. Vérifiez votre connexion."
+          onRetry={() => {
+            discovery.refetch();
+          }}
+        />
+      ) : null}
+      {data && !data.forYou.length ? (
+        <Notice
+          message="Aucune adresse disponible pour le moment."
+          onRetry={() => {
+            discovery.refetch();
+          }}
+        />
+      ) : null}
+
+      <PlaceRow
+        title="Votre prochaine obsession"
+        subtitle="Des adresses choisies selon vos envies."
+        places={data?.forYou.slice(3) ?? []}
+        onPlace={openPlace}
+      />
+      <PlaceRow
+        title="Disponible maintenant"
+        subtitle="Une table pour deux dans l’heure. À confirmer en réservant."
+        places={data?.availableNow ?? []}
+        onPlace={openPlace}
+      />
+      {data?.offers?.length ? (
+        <Section
+          eyebrow="PRIVILÈGES"
+          title="Les bons plans"
+          subtitle="Une bonne adresse. Un petit plus.">
+          {data.offers.map((offer, index) => (
+            <FadeInView key={offer.idPlace} delay={index * 90}>
+              <OfferCard offer={offer} onPlace={openPlace} />
+            </FadeInView>
+          ))}
+        </Section>
+      ) : null}
+
+      {/* Radar */}
+      <Section eyebrow="À DEUX PAS" title="Autour de vous">
+        <Pressable
+          testID="explorer-locate"
+          accessibilityRole="button"
+          accessibilityState={{disabled: locating}}
+          disabled={locating}
+          onPress={locate}
+          style={({pressed}) => [s.radar, pressed && s.pressed]}>
+          <View style={s.radarArt}>
+            <RadarArt />
+          </View>
+          <View style={s.grow}>
+            <Text style={s.radarTitle}>
+              {locating
+                ? 'Localisation…'
+                : coordinates
+                  ? 'Actualiser ma position'
+                  : 'Afficher les adresses proches'}
+            </Text>
+            <Text style={s.radarCopy}>
+              Trois adresses proches, pour improviser une sortie.
+            </Text>
+            <View style={s.radarButton}>
+              <Text style={s.radarButtonText}>Activer mon radar</Text>
+              <VectorIcon name="arrowRight" size={15} color={night.ink} />
+            </View>
+          </View>
+        </Pressable>
+        {locationError ? (
+          <Notice message={locationError} onRetry={locate} />
+        ) : null}
+        {coordinates && data && !discovery.isFetching && !data.nearby.length ? (
+          <Text style={s.copy}>Aucune adresse à moins de 20 km.</Text>
+        ) : null}
+      </Section>
+      <PlaceRow
+        title="À proximité"
+        places={data?.nearby ?? []}
+        onPlace={openPlace}
+      />
+      <PlaceRow
+        title="Tout juste arrivés"
+        subtitle="Adresses ajoutées au cours des 30 derniers jours."
+        places={data?.newPlaces ?? []}
+        onPlace={openPlace}
+      />
+      <View style={s.footer}>
+        <View style={s.footerLine} />
+        <Text style={s.footerText}>MOINS DE ROUTINE. PLUS DE DEHORS.</Text>
+        <View style={s.footerLine} />
+      </View>
+    </ScrollView>
+  );
 }
 
-function Header({eyebrow,title,subtitle,action,onPress}:{eyebrow:string;title:string;subtitle?:string;action?:string;onPress?:()=>void}){return <View style={s.header}><View style={s.flex}><Text style={s.headerKicker}>{eyebrow}</Text><Text style={s.headerTitle}>{title}</Text>{subtitle?<Text style={s.headerText}>{subtitle}</Text>:null}</View>{action?<Pressable onPress={onPress} style={s.headerAction}><Text style={s.headerActionText}>{action}</Text><VectorIcon name="arrowRight" size={13} color="#4D3B80"/></Pressable>:null}</View>;}
-function Detail({icon,text}:{icon:VectorIconName;text?:string}){return <View style={s.detail}><VectorIcon name={icon} size={12} color="#76658F"/><Text style={s.detailText}>{text||'-'}</Text></View>;}
+const glass = 'rgba(255,255,255,0.07)';
+const glassLine = 'rgba(255,255,255,0.13)';
 
-const s=StyleSheet.create({
-  screen:{flex:1,backgroundColor:'#F7F5F1'},page:{paddingBottom:125},flex:{flex:1},hero:{backgroundColor:'#261D38',paddingHorizontal:20,paddingTop:48,paddingBottom:24,borderBottomLeftRadius:36,borderBottomRightRadius:36,overflow:'visible'},orbA:{position:'absolute',width:240,height:240,borderRadius:120,backgroundColor:'rgba(132,101,184,.18)',right:-90,top:-70},orbB:{position:'absolute',width:130,height:130,borderRadius:65,backgroundColor:'rgba(244,173,84,.15)',left:-65,bottom:30},top:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},hello:{fontSize:10,color:'#BEB6C9',fontWeight:'700'},nameRow:{flexDirection:'row',alignItems:'center',gap:6,marginTop:2},name:{fontSize:17,color:'white',fontWeight:'900'},gold:{color:'#F4B45E'},avatarBox:{width:47,height:47,borderRadius:17,backgroundColor:'#4B3D62',alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'rgba(255,255,255,.2)'},avatar:{width:43,height:43,borderRadius:15},avatarText:{fontSize:16,fontWeight:'900',color:'white'},online:{position:'absolute',right:-2,bottom:-2,width:12,height:12,borderRadius:6,backgroundColor:'#57C68B',borderWidth:2,borderColor:'#261D38'},kicker:{fontSize:8,fontWeight:'900',letterSpacing:1.7,color:'#F4B45E',marginTop:28},heroTitle:{fontSize:35,lineHeight:41,fontWeight:'900',letterSpacing:-1.2,color:'white'},heroAccent:{color:'#F4B45E',fontStyle:'italic'},heroText:{fontSize:11,lineHeight:17,color:'#C9C1D2',maxWidth:315,marginTop:10},search:{marginTop:20,zIndex:50},
-  intentRow:{paddingHorizontal:18,paddingTop:17,paddingBottom:5,gap:9},intent:{height:48,borderRadius:17,backgroundColor:'white',borderWidth:1,borderColor:'#E7E0E9',paddingHorizontal:12,flexDirection:'row',alignItems:'center'},intentOn:{backgroundColor:'#4D3B80',borderColor:'#4D3B80'},intentPressed:{opacity:.72,transform:[{scale:.98}]},intentIcon:{width:27,height:27,borderRadius:10,backgroundColor:'#F1ECF5',alignItems:'center',justifyContent:'center',marginRight:7},intentIconOn:{backgroundColor:'rgba(255,255,255,.17)'},intentIconText:{fontSize:12,fontWeight:'900',color:'#4D3B80'},intentLabel:{fontSize:10,fontWeight:'900',color:'#2A2136'},white:{color:'white'},
-  near:{marginHorizontal:18,marginTop:16,minHeight:105,borderRadius:25,backgroundColor:'#4D3B80',padding:16,flexDirection:'row',alignItems:'center',overflow:'hidden'},nearOrb:{position:'absolute',width:115,height:115,borderRadius:58,backgroundColor:'rgba(255,255,255,.07)',right:-25,top:-45},nearIcon:{width:54,height:54,borderRadius:18,backgroundColor:'#F4B45E',alignItems:'center',justifyContent:'center',marginRight:13},nearIconText:{fontSize:25,fontWeight:'900',color:'#312446'},nearKicker:{fontSize:7,fontWeight:'900',letterSpacing:1.2,color:'#D8CDE8'},nearTitle:{fontSize:16,fontWeight:'900',color:'white',marginTop:3},nearText:{fontSize:8,color:'#D6CEE0',marginTop:4},arrowBox:{width:39,height:39,borderRadius:14,backgroundColor:'rgba(255,255,255,.14)',alignItems:'center',justifyContent:'center'},arrow:{fontSize:18,color:'white'},
-  section:{marginTop:31},header:{paddingHorizontal:19,flexDirection:'row',alignItems:'flex-end',marginBottom:13},headerKicker:{fontSize:7,fontWeight:'900',letterSpacing:1.5,color:'#9A6821'},headerTitle:{fontSize:23,lineHeight:28,fontWeight:'900',letterSpacing:-.5,color:'#21182E',marginTop:4},headerText:{fontSize:9,color:'#8D8694',marginTop:4},headerAction:{height:35,borderRadius:12,backgroundColor:'#ECE6F3',paddingHorizontal:11,flexDirection:'row',gap:5,alignItems:'center',justifyContent:'center'},headerActionText:{fontSize:9,fontWeight:'900',color:'#4D3B80'},
-  booking:{marginHorizontal:18,minHeight:125,borderRadius:25,backgroundColor:'white',borderWidth:1,borderColor:'#E7E1E8',padding:10,flexDirection:'row',shadowColor:'#21182E',shadowOpacity:.05,shadowRadius:14,shadowOffset:{width:0,height:6},elevation:2},bookingImage:{width:108,height:105,borderRadius:19,backgroundColor:'#E8E2EA'},bookingBody:{flex:1,paddingLeft:13,paddingVertical:3},bookingTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},status:{height:25,borderRadius:9,backgroundColor:'#FFF0D7',paddingHorizontal:8,alignItems:'center',justifyContent:'center'},statusOk:{backgroundColor:'#E2F5EA'},statusLabel:{fontSize:7,fontWeight:'900',color:'#9A6412'},statusLabelOk:{color:'#187653'},chevron:{fontSize:25,color:'#4D3B80'},bookingName:{fontSize:17,fontWeight:'900',color:'#21182E',marginTop:8},details:{flexDirection:'row',flexWrap:'wrap',gap:7,marginTop:11},detail:{flexDirection:'row',alignItems:'center',gap:3},detailIcon:{fontSize:10,fontWeight:'900',color:'#76658F',marginRight:3},detailText:{fontSize:8,fontWeight:'700',color:'#756E7C'},
-  lead:{marginHorizontal:18,height:360,borderRadius:29,overflow:'hidden',backgroundColor:'#2A2235'},leadImage:{flex:1,justifyContent:'space-between'},coverImage:{position:'absolute',top:0,right:0,bottom:0,left:0,width:'100%',height:'100%'},overlay:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(23,15,30,.42)'},choice:{alignSelf:'flex-start',margin:16,height:31,borderRadius:11,backgroundColor:'#F4B45E',paddingHorizontal:11,alignItems:'center',justifyContent:'center'},choiceText:{fontSize:8,fontWeight:'900',color:'#33233F'},leadCopy:{padding:18},leadKicker:{fontSize:8,fontWeight:'900',letterSpacing:1.3,color:'#F5BC70'},leadTitle:{fontSize:30,lineHeight:34,fontWeight:'900',color:'white',marginTop:5},leadText:{fontSize:11,color:'#E3DDE8',marginTop:6},leadBottom:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:17},addressRow:{flex:1,flexDirection:'row',alignItems:'center',gap:5,marginRight:8},address:{flex:1,fontSize:9,fontWeight:'700',color:'#E3DDE8'},discover:{height:39,borderRadius:14,backgroundColor:'white',paddingHorizontal:13,flexDirection:'row',gap:5,alignItems:'center',justifyContent:'center'},discoverText:{fontSize:9,fontWeight:'900',color:'#352744'},
-  cardRow:{paddingHorizontal:18,paddingTop:12,gap:11},placeCard:{width:210,borderRadius:23,backgroundColor:'white',borderWidth:1,borderColor:'#E7E1E8',overflow:'hidden'},placeImage:{width:'100%',height:120,backgroundColor:'#E9E3EA'},placeBody:{padding:13},placeName:{fontSize:15,fontWeight:'900',color:'#21182E'},placeText:{fontSize:9,color:'#8A838F',marginTop:4},placeBottom:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:11},ratingRow:{flexDirection:'row',alignItems:'center',gap:4},placeRating:{fontSize:8,fontWeight:'900',color:'#9A6821'},up:{fontSize:16,color:'#4D3B80'},
-  grid:{paddingHorizontal:18,flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between'},category:{width:'48.5%',height:170,borderRadius:24,overflow:'hidden',marginBottom:11},categoryWide:{width:'100%',height:205},categoryImage:{flex:1,justifyContent:'flex-end'},categoryOverlay:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(26,18,34,.38)'},categoryCopy:{padding:15},categoryEmoji:{fontSize:20,color:'white'},categoryName:{fontSize:18,fontWeight:'900',color:'white',marginTop:5},categoryAction:{flexDirection:'row',alignItems:'center',gap:5,marginTop:5},categoryLink:{fontSize:8,fontWeight:'800',color:'#F1EAF5'},categoryFallback:{flex:1,backgroundColor:'#4D3B80',padding:15,justifyContent:'flex-end'},
-  quickRow:{paddingHorizontal:18,marginTop:20,flexDirection:'row',gap:10},favorite:{flex:1,minHeight:182,borderRadius:24,backgroundColor:'#FFF0EF',padding:15,borderWidth:1,borderColor:'#F3D9D7'},favoriteIcon:{width:43,height:43,borderRadius:15,backgroundColor:'white',alignItems:'center',justifyContent:'center'},favoriteIconText:{fontSize:22,fontWeight:'900',color:'#D85C72'},quickKicker:{fontSize:7,fontWeight:'900',letterSpacing:1,color:'#A74E5E',marginTop:18},quickTitle:{fontSize:16,lineHeight:20,fontWeight:'900',color:'#38242A',marginTop:4},quickLink:{fontSize:8,fontWeight:'800',color:'#A74E5E',marginTop:12},experience:{flex:1,minHeight:182,borderRadius:24,backgroundColor:'#4D3B80',padding:15},experienceIcon:{width:43,height:43,borderRadius:15,backgroundColor:'rgba(255,255,255,.15)',alignItems:'center',justifyContent:'center'},experienceKicker:{fontSize:7,fontWeight:'900',letterSpacing:1,color:'#D8CDE8',marginTop:18},experienceTitle:{fontSize:16,lineHeight:20,fontWeight:'900',color:'white',marginTop:4},experienceLink:{fontSize:8,fontWeight:'800',color:'#F4B45E',marginTop:12}
+const s = StyleSheet.create({
+  screen: {flex: 1, backgroundColor: night.page},
+  grow: {flex: 1},
+  pressed: {opacity: 0.85, transform: [{scale: 0.97}]},
+  hero: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 26,
+    backgroundColor: night.deep,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+    overflow: 'hidden',
+  },
+  // Espace réservé sous les raccourcis pour la carte qui chevauche le héros.
+  heroWithDeck: {paddingBottom: 172},
+  deckOverlap: {marginTop: -150},
+  top: {flexDirection: 'row', alignItems: 'center', gap: 12},
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: night.violet,
+    borderWidth: 1.5,
+    borderColor: night.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {width: 41, height: 41, borderRadius: 21},
+  avatarLetter: {
+    fontFamily: fonts.display,
+    fontSize: 19,
+    fontWeight: '700',
+    color: night.white,
+  },
+  hello: {
+    color: '#A99CC4',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+  },
+  name: {color: night.white, fontSize: 17, fontWeight: '800', marginTop: 1},
+  cityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: glass,
+    borderWidth: 1,
+    borderColor: glassLine,
+  },
+  cityText: {color: night.white, fontSize: 12, fontWeight: '700'},
+  rule: {flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 24},
+  ruleLine: {width: 26, height: 1, backgroundColor: night.gold},
+  ruleText: {
+    color: night.gold,
+    fontSize: 10,
+    letterSpacing: 2.4,
+    fontWeight: '700',
+  },
+  heroTitle: {
+    fontFamily: fonts.display,
+    color: night.white,
+    fontSize: 33,
+    lineHeight: 40,
+    letterSpacing: -0.6,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+  accent: {color: night.gold, fontStyle: 'italic'},
+  heroCopy: {
+    color: '#BDB2CE',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 8,
+    marginBottom: 18,
+    maxWidth: 290,
+  },
+  search: {zIndex: 20},
+  dock: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: glass,
+    borderWidth: 1,
+    borderColor: glassLine,
+  },
+  dockItem: {flex: 1, alignItems: 'center', paddingHorizontal: 4},
+  dockDivider: {width: 1, marginVertical: 8, backgroundColor: glassLine},
+  dockIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  dockLabel: {color: night.white, fontSize: 13, fontWeight: '800'},
+  dockCaption: {color: '#A99CC4', fontSize: 10, marginTop: 2},
+  ticket: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    borderRadius: 24,
+    backgroundColor: night.ink,
+    overflow: 'hidden',
+  },
+  ticketDate: {
+    width: 84,
+    alignSelf: 'stretch',
+    paddingVertical: 18,
+    backgroundColor: night.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  ticketTime: {
+    fontFamily: fonts.display,
+    color: night.ink,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  ticketNotch: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginLeft: -7,
+    marginRight: 9,
+    backgroundColor: night.page,
+  },
+  ticketTitle: {
+    fontFamily: fonts.display,
+    color: night.white,
+    fontSize: 18,
+    fontWeight: '700',
+    paddingRight: 16,
+  },
+  ticketMeta: {color: '#BDB2CE', fontSize: 12, marginTop: 5},
+  ticketLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 10,
+  },
+  ticketLink: {color: night.gold, fontWeight: '700', fontSize: 12},
+  bleed: {marginHorizontal: -22},
+  categories: {paddingHorizontal: 22, paddingTop: 14, gap: 10},
+  interest: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 46,
+    paddingLeft: 6,
+    paddingRight: 16,
+    borderRadius: 23,
+    backgroundColor: night.white,
+    borderWidth: 1,
+    borderColor: night.line,
+  },
+  interestIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  interestText: {fontSize: 13, fontWeight: '700', color: night.text},
+  moods: {gap: 12, paddingHorizontal: 22, paddingTop: 14},
+  radar: {
+    flexDirection: 'row',
+    gap: 14,
+    alignItems: 'center',
+    marginTop: 14,
+    padding: 18,
+    borderRadius: 26,
+    backgroundColor: night.deep,
+  },
+  radarArt: {transform: [{scale: 0.9}]},
+  radarTitle: {
+    fontFamily: fonts.display,
+    fontSize: 17,
+    fontWeight: '700',
+    color: night.white,
+  },
+  radarCopy: {color: '#BDB2CE', fontSize: 12, lineHeight: 18, marginTop: 6},
+  copy: {color: night.muted, fontSize: 12, lineHeight: 18, marginTop: 6},
+  radarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: night.gold,
+  },
+  radarButtonText: {color: night.ink, fontWeight: '800', fontSize: 12},
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 44,
+    marginHorizontal: 22,
+  },
+  footerLine: {flex: 1, height: 1, backgroundColor: night.line},
+  footerText: {
+    fontFamily: fonts.display,
+    fontStyle: 'italic',
+    fontSize: 10,
+    letterSpacing: 2,
+    color: night.muted,
+  },
 });

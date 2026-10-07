@@ -1,15 +1,18 @@
+// Palette « Nuit tunisienne », alignée sur components/discovery/theme.ts.
 export const Color = {
-  red: '#E74C3C',
-  main: '#45377A',
-  mainLight: '#EEEAF8',
-  accent: '#E8A45B',
-  background: '#F7F7FB',
+  red: '#D92D20',
+  main: '#33264D',
+  mainLight: '#EFE9FC',
+  accent: '#F6B65C',
+  violet: '#7251C9',
+  ink: '#1C1529',
+  background: '#F8F6FC',
   surface: '#FFFFFF',
-  text: '#19152A',
-  muted: '#777382',
-  border: '#ECEAF1',
-  success: '#008000',
-  error: '#e74c3c',
+  text: '#1F1B2E',
+  muted: '#6E6880',
+  border: '#ECE8F4',
+  success: '#19796F',
+  error: '#D92D20',
 };
 // Configure linking
 export const linking = {

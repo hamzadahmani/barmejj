@@ -3,7 +3,7 @@ setlocal
 
 set "PROJECT_ROOT=%~dp0.."
 set "ANDROID_USER_HOME=%USERPROFILE%\.android"
-set "GRADLE_USER_HOME=%PROJECT_ROOT%\android\.gradle-user"
+set "GRADLE_USER_HOME=%USERPROFILE%\.gradle-barmej"
 set "JAVA_TOOL_OPTIONS=-Duser.home=%USERPROFILE%"
 set "ANDROID_SDK_HOME="
 

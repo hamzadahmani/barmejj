@@ -33,23 +33,24 @@ export function transformTime(inputTime: any) {
   return transformedTime;
 }
 
-export function isTimeWithinRange(dataTime: string) {
-  const currentTime = new Date();
+export function isTimeWithinRange(dataTime: string, now = new Date()) {
+  const currentTime = now;
   const currentHour = currentTime.getHours();
   const currentMinute = currentTime.getMinutes();
 
-  const [openTimeStr, closeTimeStr] = dataTime?.split(' - ');
-  const [openHour, openMinute] = openTimeStr?.split(':').map(Number);
-  const [closeHour, closeMinute] = closeTimeStr?.split(':').map(Number);
+  const match = dataTime?.match(/^\s*(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\s*$/);
+  if (!match) return false;
+  const [openHour, openMinute, closeHour, closeMinute] = match.slice(1).map(Number);
+  if (openHour > 23 || closeHour > 23 || openMinute > 59 || closeMinute > 59) return false;
 
   const currentTimeInMinutes = currentHour * 60 + currentMinute;
   const openTimeInMinutes = openHour * 60 + openMinute;
   const closeTimeInMinutes = closeHour * 60 + closeMinute;
 
-  return (
-    currentTimeInMinutes >= openTimeInMinutes &&
-    currentTimeInMinutes <= closeTimeInMinutes
-  );
+  if (openTimeInMinutes === closeTimeInMinutes) return false;
+  return closeTimeInMinutes > openTimeInMinutes
+    ? currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes
+    : currentTimeInMinutes >= openTimeInMinutes || currentTimeInMinutes < closeTimeInMinutes;
 }
 
 export const trasformedReservationTime = (startTime: Date, endTime: Date) => {

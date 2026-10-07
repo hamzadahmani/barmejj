@@ -5,18 +5,16 @@ import {deleteAccountAPI} from '../../../../services/auth';
 import LoadingSpinner from '../../../../components/Loader';
 
 const DeleteAccountScreen = ({isModalVisible, toggleModal, logout}: any) => {
-  const {mutate: updateReservationlMutate, isLoading} = useMutation(
-    (data: any) => deleteAccountAPI(data),
-    {
-      onSuccess: () => {
-        toggleModal();
-        logout();
-      },
-      onError: () => {
-        toggleModal();
-      },
+  const {mutate: updateReservationlMutate, isPending: isLoading} = useMutation({
+    mutationFn: (data: any) => deleteAccountAPI(data),
+    onSuccess: () => {
+      toggleModal();
+      logout();
     },
-  );
+    onError: () => {
+      toggleModal();
+    },
+  });
 
   const handleDeleteAccount = () => {
     updateReservationlMutate({});
@@ -26,7 +24,7 @@ const DeleteAccountScreen = ({isModalVisible, toggleModal, logout}: any) => {
     <View>
       {<LoadingSpinner visible={isLoading} />}
       <Modal p={0} isOpen={isModalVisible} onClose={toggleModal}>
-        <Modal.Content style={{width: '80%', alignSelf: 'center'}}>
+        <Modal.Content style={layoutStyles.style1}>
           <Modal.Header>
             <Modal.CloseButton />
             <Text fontFamily={'Poppins'} fontWeight={500} fontSize={16}>
@@ -61,3 +59,7 @@ const DeleteAccountScreen = ({isModalVisible, toggleModal, logout}: any) => {
 };
 
 export default DeleteAccountScreen;
+
+const layoutStyles = {
+style1: {width: '80%', alignSelf: 'center'}
+} as const;

@@ -1,3 +1,4 @@
+import {queryKeys, mutationEffects} from '../../query/keys';
 import {useMutation, useQuery} from '@tanstack/react-query';
 import {Box, Flex, Pressable, Text} from 'native-base';
 import React, {useCallback} from 'react';
@@ -14,9 +15,22 @@ import {
 } from '../../services/notification';
 
 export default function NotficationScreen({navigation}: any) {
-  const {data = [], isLoading, refetch} = useQuery(['notifications'], getNotificationsAPI);
-  const {mutate: markRead} = useMutation((id: number) => markNotificationReadAPI(id), {onSuccess: () => refetch()});
-  const {mutate: markAllRead} = useMutation(markAllNotificationsReadAPI, {onSuccess: () => refetch()});
+  const {
+    data = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: getNotificationsAPI,
+  });
+  const {mutate: markRead} = useMutation({
+    meta: mutationEffects.notification,
+    mutationFn: (id: number) => markNotificationReadAPI(id),
+  });
+  const {mutate: markAllRead} = useMutation({
+    meta: mutationEffects.notification,
+    mutationFn: markAllNotificationsReadAPI,
+  });
   const unreadCount = data.filter((item: any) => !item.read).length;
 
   useFocusEffect(
@@ -43,16 +57,36 @@ export default function NotficationScreen({navigation}: any) {
           borderColor={Color.border}
           alignItems="center"
           justifyContent="center">
-          <Text color={Color.main} fontSize={30} lineHeight={32}>‹</Text>
+          <Text color={Color.main} fontSize={30} lineHeight={32}>
+            ‹
+          </Text>
         </Pressable>
-        <Flex mt={5} direction="row" justifyContent="space-between" alignItems="flex-end">
+        <Flex
+          mt={5}
+          direction="row"
+          justifyContent="space-between"
+          alignItems="flex-end">
           <Box flex={1}>
-            <Text color={Color.main} fontSize={11} fontWeight={800} letterSpacing={2}>VOTRE ACTIVITÉ</Text>
-            <Text color={Color.text} fontSize={30} fontWeight={800} mt={2}>Notifications</Text>
+            <Text
+              color={Color.main}
+              fontSize={11}
+              fontWeight={800}
+              letterSpacing={2}>
+              VOTRE ACTIVITÉ
+            </Text>
+            <Text color={Color.text} fontSize={30} fontWeight={800} mt={2}>
+              Notifications
+            </Text>
           </Box>
           {unreadCount > 0 ? (
-            <Pressable onPress={() => markAllRead()} minHeight={12} justifyContent="center" pl={3}>
-              <Text color={Color.main} fontSize={12} fontWeight={800}>Tout lire ({unreadCount})</Text>
+            <Pressable
+              onPress={() => markAllRead()}
+              minHeight={12}
+              justifyContent="center"
+              pl={3}>
+              <Text color={Color.main} fontSize={12} fontWeight={800}>
+                Tout lire ({unreadCount})
+              </Text>
             </Pressable>
           ) : null}
         </Flex>
@@ -63,20 +97,37 @@ export default function NotficationScreen({navigation}: any) {
         contentContainerStyle={styles.list}
         renderItem={({item}: any) => (
           <Pressable onPress={() => !item.read && markRead(item.id)}>
-            <Box bg="white" borderRadius={18} p={4} my={2} borderLeftWidth={item.read ? 0 : 4} borderLeftColor={Color.main} shadow={1}>
-              <Text color={Color.text} fontWeight={800}>{item.title}</Text>
-              <Text color={Color.muted} mt={1} lineHeight={20}>{item.message}</Text>
-              <Text color="#9995A3" fontSize={10} mt={3}>{new Date(item.createdAt).toLocaleString('fr-FR')}</Text>
+            <Box
+              bg="white"
+              borderRadius={18}
+              p={4}
+              my={2}
+              borderLeftWidth={item.read ? 0 : 4}
+              borderLeftColor={Color.main}
+              shadow={1}>
+              <Text color={Color.text} fontWeight={800}>
+                {item.title}
+              </Text>
+              <Text color={Color.muted} mt={1} lineHeight={20}>
+                {item.message}
+              </Text>
+              <Text color="#9995A3" fontSize={10} mt={3}>
+                {new Date(item.createdAt).toLocaleString('fr-FR')}
+              </Text>
             </Box>
           </Pressable>
         )}
-        ListEmptyComponent={(
+        ListEmptyComponent={
           <Flex mt={160} justifyContent="center" alignItems="center" px={8}>
             <NoNotification />
-            <Text color={Color.text} textAlign="center" fontWeight={700} mt={4}>Pas de notification pour l’instant</Text>
-            <Text color={Color.muted} textAlign="center" fontSize={13} mt={1}>Les mises à jour de vos réservations apparaîtront ici.</Text>
+            <Text color={Color.text} textAlign="center" fontWeight={700} mt={4}>
+              Pas de notification pour l’instant
+            </Text>
+            <Text color={Color.muted} textAlign="center" fontSize={13} mt={1}>
+              Les mises à jour de vos réservations apparaîtront ici.
+            </Text>
           </Flex>
-        )}
+        }
       />
     </Flex>
   );

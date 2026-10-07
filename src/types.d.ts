@@ -1,7 +1,5 @@
 import type {ReactNode} from 'react';
 
-declare module 'react-native-keyboard-aware-scrollview';
-
 declare module 'react-native-svg' {
   interface SvgProps {
     children?: ReactNode;

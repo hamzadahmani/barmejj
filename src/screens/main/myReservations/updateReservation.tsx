@@ -1,3 +1,4 @@
+import {queryKeys, mutationEffects} from '../../../query/keys';
 import {useMutation, useQuery} from '@tanstack/react-query';
 import {
   Box,
@@ -35,34 +36,65 @@ const statusLabel: Record<string, string> = {
 export default function ReservationDetailsScreen({route, navigation}: any) {
   const {id} = route.params;
   const toast = useToast();
-  const {data: reservation, isLoading, refetch} = useQuery(
-    ['getReservationsById', {id}],
-    getReservationsById,
-  );
-  const {mutate: cancelReservation, isLoading: deleteLoading} = useMutation(
-    (reason?: string) => cancelReservationAPI(id, reason),
-    {
-      onSuccess: () => {
-        toast.show({
-          placement: 'top',
-          render: () => (
-            <Toast
-              message="Réservation annulée avec succès"
-              status={Color.success}
-            />
-          ),
-        });
-        navigation.goBack();
-      },
+  const {data: reservation, isLoading} = useQuery({
+    queryKey: [...queryKeys.getReservationsById, {id}],
+    queryFn: getReservationsById,
+  });
+  const {mutate: cancelReservation, isPending: deleteLoading} = useMutation({
+    meta: mutationEffects.reservation,
+    mutationFn: (reason?: string) => cancelReservationAPI(id, reason),
+    onSuccess: () => {
+      toast.show({
+        placement: 'top',
+        render: () => (
+          <Toast
+            message="Réservation annulée avec succès"
+            status={Color.success}
+          />
+        ),
+      });
+      navigation.goBack();
     },
-  );
-  const proposal = useMutation((action: 'accept' | 'decline') => action === 'accept' ? acceptReservationProposalAPI(id) : declineReservationProposalAPI(id, 'Horaire non adapté'), {onSuccess: () => {toast.show({placement: 'top', render: () => <Toast message="Votre réponse a été enregistrée" status={Color.success}/>}); refetch();}});
+  });
+  const proposal = useMutation({
+    meta: mutationEffects.reservation,
+    mutationFn: (action: 'accept' | 'decline') =>
+      action === 'accept'
+        ? acceptReservationProposalAPI(id)
+        : declineReservationProposalAPI(id, 'Horaire non adapté'),
+    onSuccess: () => {
+      toast.show({
+        placement: 'top',
+        render: () => (
+          <Toast
+            message="Votre réponse a été enregistrée"
+            status={Color.success}
+          />
+        ),
+      });
+    },
+  });
 
   const confirmCancel = () => {
     Alert.alert(
       'Annuler la réservation',
       'La réservation sera conservée dans votre historique avec le statut « Annulée ».',
-      [{text: 'Retour', style: 'cancel'}, {text: 'Changement de programme', onPress: () => cancelReservation('Changement de programme')}, {text: 'Problème avec l’horaire', onPress: () => cancelReservation('Problème avec l’horaire')}, {text: 'Autre raison', style: 'destructive', onPress: () => cancelReservation('Autre raison')}],
+      [
+        {text: 'Retour', style: 'cancel'},
+        {
+          text: 'Changement de programme',
+          onPress: () => cancelReservation('Changement de programme'),
+        },
+        {
+          text: 'Problème avec l’horaire',
+          onPress: () => cancelReservation('Problème avec l’horaire'),
+        },
+        {
+          text: 'Autre raison',
+          style: 'destructive',
+          onPress: () => cancelReservation('Autre raison'),
+        },
+      ],
     );
   };
 
@@ -70,7 +102,7 @@ export default function ReservationDetailsScreen({route, navigation}: any) {
     <ScrollView
       backgroundColor={Color.background}
       paddingX={5}
-      contentContainerStyle={{paddingBottom: 100}}>
+      contentContainerStyle={layoutStyles.style1}>
       <LoadingSpinner visible={isLoading || deleteLoading} />
       <Box pt={8} pb={5}>
         <Pressable onPress={() => navigation.goBack()} mb={5}>
@@ -163,32 +195,79 @@ export default function ReservationDetailsScreen({route, navigation}: any) {
               {reservation.message || 'Aucune demande particulière'}
             </Text>
           </Box>
-          {reservation.status === 'PROPOSED' && <Box mt={4} bg="#FFF7E8" borderWidth={1} borderColor="#F3C978" borderRadius={20} p={5}>
-            <Text color="#8A5510" fontSize={11} fontWeight={800} letterSpacing={1.5}>PROPOSITION DE L’ÉTABLISSEMENT</Text>
-            <Text color={Color.text} fontSize={21} fontWeight={800} mt={2}>{reservation.proposedDate} · {reservation.proposedTime?.slice(0,5)}</Text>
-            {reservation.proposalMessage ? <Text color={Color.muted} mt={2}>{reservation.proposalMessage}</Text> : null}
-            <Flex direction="row" mt={4} justifyContent="space-between"><Button width="47%" variant="outline" borderColor="#D92D20" _text={{color:'#D92D20',fontWeight:700}} onPress={() => proposal.mutate('decline')}>Refuser</Button><Button width="49%" bg={Color.main} _text={{fontWeight:700}} onPress={() => proposal.mutate('accept')}>Accepter</Button></Flex>
-          </Box>}
+          {reservation.status === 'PROPOSED' && (
+            <Box
+              mt={4}
+              bg="#FFF7E8"
+              borderWidth={1}
+              borderColor="#F3C978"
+              borderRadius={20}
+              p={5}>
+              <Text
+                color="#8A5510"
+                fontSize={11}
+                fontWeight={800}
+                letterSpacing={1.5}>
+                PROPOSITION DE L’ÉTABLISSEMENT
+              </Text>
+              <Text color={Color.text} fontSize={21} fontWeight={800} mt={2}>
+                {reservation.proposedDate} ·{' '}
+                {reservation.proposedTime?.slice(0, 5)}
+              </Text>
+              {reservation.proposalMessage ? (
+                <Text color={Color.muted} mt={2}>
+                  {reservation.proposalMessage}
+                </Text>
+              ) : null}
+              <Flex direction="row" mt={4} justifyContent="space-between">
+                <Button
+                  width="47%"
+                  variant="outline"
+                  borderColor="#D92D20"
+                  _text={{color: '#D92D20', fontWeight: 700}}
+                  onPress={() => proposal.mutate('decline')}>
+                  Refuser
+                </Button>
+                <Button
+                  width="49%"
+                  bg={Color.main}
+                  _text={{fontWeight: 700}}
+                  onPress={() => proposal.mutate('accept')}>
+                  Accepter
+                </Button>
+              </Flex>
+            </Box>
+          )}
           <Button
             height={54}
             borderRadius={16}
             mt={5}
             backgroundColor={Color.main}
             _text={{fontWeight: '700'}}
-            onPress={() => navigation.navigate('ReservationTicket', {reservation})}>
+            onPress={() =>
+              navigation.navigate('ReservationTicket', {reservation})
+            }>
             Afficher mon e-ticket
           </Button>
-          {['PENDING', 'PROPOSED', 'CONFIRMED'].includes(reservation.status) && <Button
-            height={54}
-            borderRadius={16}
-            mt={5}
-            backgroundColor="#D92D20"
-            _text={{fontWeight: '700'}}
-            onPress={confirmCancel}>
-            Annuler la réservation
-          </Button>}
+          {['PENDING', 'PROPOSED', 'CONFIRMED'].includes(
+            reservation.status,
+          ) && (
+            <Button
+              height={54}
+              borderRadius={16}
+              mt={5}
+              backgroundColor="#D92D20"
+              _text={{fontWeight: '700'}}
+              onPress={confirmCancel}>
+              Annuler la réservation
+            </Button>
+          )}
         </>
       )}
     </ScrollView>
   );
 }
+
+const layoutStyles = {
+style1: {paddingBottom: 100}
+} as const;

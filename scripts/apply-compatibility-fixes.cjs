@@ -58,32 +58,26 @@ for (const file of backHandlerFiles) {
   }
 }
 
-// react-native-image-picker 7.1.0 hard-codes Android SDK 33, while
-// React Native 0.87 and its Android dependencies require SDK 34+.
-const imagePickerGradle = path.join(
+// image-size v2 fixes malformed-image parser vulnerabilities. Its API accepts
+// buffers only, while Metro 0.87 still passes a filename in getAssetData.
+const metroAssetsFile = path.join(
   __dirname,
   '..',
   'node_modules',
-  'react-native-image-picker',
-  'android',
-  'build.gradle',
+  'metro',
+  'src',
+  'Assets.js',
 );
-
-if (fs.existsSync(imagePickerGradle)) {
-  const source = fs.readFileSync(imagePickerGradle, 'utf8');
-  const fixed = source
-    .replace(
-      /compileSdkVersion\s+33/g,
-      'compileSdkVersion rootProject.ext.compileSdkVersion',
-    )
-    .replace(
-      /targetSdkVersion\s+33/g,
-      'targetSdkVersion rootProject.ext.targetSdkVersion',
-    );
+if (fs.existsSync(metroAssetsFile)) {
+  const source = fs.readFileSync(metroAssetsFile, 'utf8');
+  const fixed = source.replace(
+    /const isImageInput = assetInfo\.files\[0\]\.includes\("\.zip\/"\)[\s\S]*?: assetInfo\.files\[0\];/,
+    'const isImageInput = _fs.default.readFileSync(assetInfo.files[0]);',
+  );
   if (fixed !== source) {
-    fs.writeFileSync(imagePickerGradle, fixed);
+    fs.writeFileSync(metroAssetsFile, fixed);
     changedFiles += 1;
   }
 }
 
-console.log(`NativeBase RN 0.87 compatibility: ${changedFiles} file(s) updated.`);
+console.log(`Dependency compatibility: ${changedFiles} file(s) updated.`);

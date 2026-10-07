@@ -4,12 +4,13 @@ import Svg, {Path} from 'react-native-svg';
 import {Color} from '../../../helpers/constatn';
 
 const experiences=[
-  {screen:'LoyaltyRewards',number:'01',title:'Mes récompenses',subtitle:'Vos points et cadeaux, établissement par établissement',accent:'#FFF0DE'},
-  {screen:'SmartAssistant',number:'02',title:'Assistant Barmej',subtitle:'Une sortie adaptée à votre envie, budget et occasion',accent:'#F3E8FF'},
-  {screen:'GroupPlanner',number:'03',title:'Planifier en groupe',subtitle:'Invitez vos amis, proposez et votez ensemble',accent:'#E9F3FF'},
-  {screen:'Waitlist',number:'04',title:'Liste d’attente',subtitle:'Soyez alerté dès qu’une table se libère',accent:'#FFF0DE'},
-  {screen:'VerifiedReviews',number:'05',title:'Mes avis vérifiés',subtitle:'Partagez vos expériences après une vraie sortie',accent:'#E8F6EE'},
-  {screen:'Personalization',number:'06',title:'Mes préférences',subtitle:'Alimentation, allergies, ambiances et budget',accent:'#FCE9EE'},
+  {screen:'Barmejli',number:'01',title:'Barmejli · Win Nemchiw ?',subtitle:'Décrivez votre envie, Barmej crée toute votre sortie',accent:'#FFE6D8'},
+  {screen:'LoyaltyRewards',number:'02',title:'Mes récompenses',subtitle:'Vos points et cadeaux, établissement par établissement',accent:'#FFF0DE'},
+  {screen:'SmartAssistant',number:'03',title:'Assistant Barmej',subtitle:'Une sortie adaptée à votre envie, budget et occasion',accent:'#F3E8FF'},
+  {screen:'GroupPlanner',number:'04',title:'Planifier en groupe',subtitle:'Invitez vos amis, proposez et votez ensemble',accent:'#E9F3FF'},
+  {screen:'Waitlist',number:'05',title:'Liste d’attente',subtitle:'Soyez alerté dès qu’une table se libère',accent:'#FFF0DE'},
+  {screen:'VerifiedReviews',number:'06',title:'Mes avis vérifiés',subtitle:'Partagez vos expériences après une vraie sortie',accent:'#E8F6EE'},
+  {screen:'Personalization',number:'07',title:'Mes préférences',subtitle:'Alimentation, allergies, ambiances et budget',accent:'#FCE9EE'},
 ];
 
 const Sparkle=()=> <Svg width={29} height={29} viewBox="0 0 24 24" fill="none"><Path d="M12 2c.7 5.2 2.8 7.3 8 8-5.2.7-7.3 2.8-8 8-.7-5.2-2.8-7.3-8-8 5.2-.7 7.3-2.8 8-8Z" fill="white"/><Path d="M19 16c.3 2.1 1.2 3 3 3.5-1.8.4-2.7 1.3-3 3.5-.4-2.2-1.3-3.1-3-3.5 1.7-.5 2.6-1.4 3-3.5Z" fill="#FFBC63"/></Svg>;

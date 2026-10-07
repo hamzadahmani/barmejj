@@ -1,3 +1,4 @@
+import {queryKeys, mutationEffects} from '../../../query/keys';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 import {
@@ -16,7 +17,7 @@ import {
   View,
   WarningOutlineIcon,
 } from 'native-base';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import SvgEdit from '../../../assets/edit';
 import SvgSettings from '../../../assets/Settings';
 import {useForm, Controller} from 'react-hook-form';
@@ -78,42 +79,47 @@ export default function Profil({navigation}: any) {
 
   const photoUri = watch('userPhoto');
 
-  const {isLoading: getLoading, isRefetching: profileRefreshing, data: currentUser, refetch: refetchProfile} = useQuery(
-    ['getUserData'],
-    getProfilAPI,
-    {
-      onSuccess: response => {
-        console.log('response', response);
-        reset(response);
-      },
-    },
-  );
-  const {data: loyaltyAccounts, isRefetching: loyaltyRefreshing, refetch: refetchLoyalty} = useQuery(['loyaltyAccounts'], getLoyaltyAccountsAPI);
+  const {
+    isLoading: getLoading,
+    isRefetching: profileRefreshing,
+    data: currentUser,
+    refetch: refetchProfile,
+  } = useQuery({queryKey: queryKeys.profile, queryFn: getProfilAPI});
+  useEffect(() => {
+    if (currentUser && !editMode) reset(currentUser);
+  }, [currentUser, editMode, reset]);
 
-  const {mutate: updateProfilMutate, isLoading} = useMutation(
-    (data: any) => updateProfilAPI(data),
-    {
-      onSuccess: () => {
-        toast.show({
-          placement: 'top',
-          render: () => {
-            return (
-              <Toast
-                message={'votre profil a été mis à jour avec succès'}
-                status={'#008000'}
-              />
-            );
-          },
-        });
-        setEditMode(false);
-      },
-      onError: err => {
-        console.warn('data', err);
-      },
+  const {
+    data: loyaltyAccounts,
+    isRefetching: loyaltyRefreshing,
+    refetch: refetchLoyalty,
+  } = useQuery({
+    queryKey: queryKeys.loyaltyAccounts,
+    queryFn: getLoyaltyAccountsAPI,
+  });
+
+  const {mutate: updateProfilMutate, isPending: isLoading} = useMutation({
+    meta: mutationEffects.profile,
+    mutationFn: (data: any) => updateProfilAPI(data),
+    onSuccess: () => {
+      toast.show({
+        placement: 'top',
+        render: () => {
+          return (
+            <Toast
+              message={'votre profil a été mis à jour avec succès'}
+              status={'#008000'}
+            />
+          );
+        },
+      });
+      setEditMode(false);
     },
-  );
+    onError: err => {
+      console.warn('data', err);
+    },
+  });
   const onSubmit = (data: any) => {
-    console.log('im in ');
     Keyboard.dismiss();
     const {
       userPwd,
@@ -141,7 +147,16 @@ export default function Profil({navigation}: any) {
       {<LoadingSpinner visible={isLoading || getLoading} />}
 
       <ScrollView
-        refreshControl={<RefreshControl refreshing={profileRefreshing || loyaltyRefreshing} onRefresh={() => {void Promise.all([refetchProfile(), refetchLoyalty()]);}} colors={[Color.main]} tintColor={Color.main}/>} 
+        refreshControl={
+          <RefreshControl
+            refreshing={profileRefreshing || loyaltyRefreshing}
+            onRefresh={() => {
+              void Promise.all([refetchProfile(), refetchLoyalty()]);
+            }}
+            colors={[Color.main]}
+            tintColor={Color.main}
+          />
+        }
         contentContainerStyle={{
           paddingBottom: 100,
           backgroundColor: Color.background,
@@ -236,23 +251,97 @@ export default function Profil({navigation}: any) {
             {currentUser?.userMail}
           </Text>
         </Flex>
-        <Box mt={5} bg={Color.main} borderRadius={22} p={5} overflow="hidden" shadow={2}>
-          <Box position="absolute" width={32} height={32} borderRadius={80} bg="rgba(255,255,255,.08)" right={-8} top={-8} />
-          <Flex direction="row" justifyContent="space-between" alignItems="flex-start">
+        <Box
+          mt={5}
+          bg={Color.main}
+          borderRadius={22}
+          p={5}
+          overflow="hidden"
+          shadow={2}>
+          <Box
+            position="absolute"
+            width={32}
+            height={32}
+            borderRadius={80}
+            bg="rgba(255,255,255,.08)"
+            right={-8}
+            top={-8}
+          />
+          <Flex
+            direction="row"
+            justifyContent="space-between"
+            alignItems="flex-start">
             <Box flex={1} pr={4}>
-              <Text color="#FFCA79" fontSize={10} fontWeight={900} letterSpacing={1.4}>MES AVANTAGES</Text>
-              <Text color="white" fontSize={22} fontWeight={900} mt={2}>Fidélité Barmej</Text>
-              <Text color="#DDD4EE" fontSize={11} mt={1}>Vos visites terminées vous rapprochent de nouvelles récompenses.</Text>
+              <Text
+                color="#FFCA79"
+                fontSize={10}
+                fontWeight={900}
+                letterSpacing={1.4}>
+                MES AVANTAGES
+              </Text>
+              <Text color="white" fontSize={22} fontWeight={900} mt={2}>
+                Fidélité Barmej
+              </Text>
+              <Text color="#DDD4EE" fontSize={11} mt={1}>
+                Vos visites terminées vous rapprochent de nouvelles récompenses.
+              </Text>
             </Box>
-            <Box width={12} height={12} borderRadius={18} bg="rgba(255,255,255,.14)" alignItems="center" justifyContent="center"><Text fontSize={21}>★</Text></Box>
+            <Box
+              width={12}
+              height={12}
+              borderRadius={18}
+              bg="rgba(255,255,255,.14)"
+              alignItems="center"
+              justifyContent="center">
+              <Text fontSize={21}>★</Text>
+            </Box>
           </Flex>
-          {(loyaltyAccounts ?? []).length ? (loyaltyAccounts ?? []).slice(0, 3).map(account => (
-            <Box key={account.placeId} mt={4} bg="rgba(255,255,255,.11)" borderRadius={16} p={3}>
-              <Flex direction="row" justifyContent="space-between"><Text color="white" fontWeight={800}>{account.placeName}</Text><Text color="#FFCA79" fontWeight={900}>{account.balance} pts</Text></Flex>
-              <Box height={2} bg="rgba(255,255,255,.18)" borderRadius={5} mt={3} overflow="hidden"><Box width={`${account.progress}%`} height="100%" bg="#FFCA79" /></Box>
-              <Text color="#DDD4EE" fontSize={9} mt={2}>{account.nextReward ? `${account.nextReward.name} · ${account.nextReward.pointsCost} points` : `${account.rewards.length} récompense(s) disponible(s)`}</Text>
+          {(loyaltyAccounts ?? []).length ? (
+            (loyaltyAccounts ?? []).slice(0, 3).map(account => (
+              <Box
+                key={account.placeId}
+                mt={4}
+                bg="rgba(255,255,255,.11)"
+                borderRadius={16}
+                p={3}>
+                <Flex direction="row" justifyContent="space-between">
+                  <Text color="white" fontWeight={800}>
+                    {account.placeName}
+                  </Text>
+                  <Text color="#FFCA79" fontWeight={900}>
+                    {account.balance} pts
+                  </Text>
+                </Flex>
+                <Box
+                  height={2}
+                  bg="rgba(255,255,255,.18)"
+                  borderRadius={5}
+                  mt={3}
+                  overflow="hidden">
+                  <Box
+                    width={`${account.progress}%`}
+                    height="100%"
+                    bg="#FFCA79"
+                  />
+                </Box>
+                <Text color="#DDD4EE" fontSize={9} mt={2}>
+                  {account.nextReward
+                    ? `${account.nextReward.name} · ${account.nextReward.pointsCost} points`
+                    : `${account.rewards.length} récompense(s) disponible(s)`}
+                </Text>
+              </Box>
+            ))
+          ) : (
+            <Box mt={4} bg="rgba(255,255,255,.1)" borderRadius={16} p={4}>
+              <Text color="white" fontWeight={800}>
+                Vos premiers points apparaîtront ici
+              </Text>
+              <Text color="#DDD4EE" fontSize={10} mt={1}>
+                Réservez puis validez votre présence chez un établissement
+                partenaire.
+              </Text>
             </Box>
-          )) : <Box mt={4} bg="rgba(255,255,255,.1)" borderRadius={16} p={4}><Text color="white" fontWeight={800}>Vos premiers points apparaîtront ici</Text><Text color="#DDD4EE" fontSize={10} mt={1}>Réservez puis validez votre présence chez un établissement partenaire.</Text></Box>}
+          )}
         </Box>
         <Flex mt={5} bg="white" borderRadius={22} p={4} shadow={1}>
           <Flex
@@ -373,10 +462,10 @@ export default function Profil({navigation}: any) {
                       {value === 'W'
                         ? 'Femme'
                         : value === 'H'
-                        ? 'Homme'
-                        : value === 'O'
-                        ? 'Autre'
-                        : 'Non renseigné'}
+                          ? 'Homme'
+                          : value === 'O'
+                            ? 'Autre'
+                            : 'Non renseigné'}
                     </Text>
                     <ChevronDownIcon color={Color.main} size="sm" />
                   </Flex>
@@ -439,15 +528,29 @@ export default function Profil({navigation}: any) {
             <Text color={Color.text} fontSize={19} fontWeight={800} mb={3}>
               Activité du compte
             </Text>
-              <Pressable onPress={() => navigation.navigate('Notifications')}>
-                <Flex direction="row" justifyContent="space-between" alignItems="center" bg="white" borderRadius={18} p={4} mb={3} shadow={1}>
-                  <Box flex={1}>
-                    <Text color={Color.text} fontWeight={800}>Notifications</Text>
-                    <Text color={Color.muted} fontSize={12} mt={1}>Confirmations, changements et rappels</Text>
-                  </Box>
-                  <Text color={Color.main} fontSize={22}>›</Text>
-                </Flex>
-              </Pressable>
+            <Pressable onPress={() => navigation.navigate('Notifications')}>
+              <Flex
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                bg="white"
+                borderRadius={18}
+                p={4}
+                mb={3}
+                shadow={1}>
+                <Box flex={1}>
+                  <Text color={Color.text} fontWeight={800}>
+                    Notifications
+                  </Text>
+                  <Text color={Color.muted} fontSize={12} mt={1}>
+                    Confirmations, changements et rappels
+                  </Text>
+                </Box>
+                <Text color={Color.main} fontSize={22}>
+                  ›
+                </Text>
+              </Flex>
+            </Pressable>
           </Box>
         )}
         {editMode && (
@@ -471,7 +574,9 @@ export default function Profil({navigation}: any) {
               borderRadius={16}
               backgroundColor={Color.main}
               _text={{color: 'white', fontWeight: '700'}}
-              onPress={() => void handleSubmit(onSubmit)()}>
+              onPress={() => {
+                void handleSubmit(onSubmit)();
+              }}>
               Enregistrer
             </Button>
           </Flex>

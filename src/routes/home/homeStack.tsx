@@ -1,6 +1,7 @@
 import {createStackNavigator} from '@react-navigation/stack';
 import categorie from '../../screens/main/categories';
 import PlaceDetails from '../../screens/main/detailsPlace';
+import StayBooking from '../../screens/main/stay';
 import HomeScreen from '../../screens/main/home';
 import Resevation from '../../screens/main/reservation';
 import ReservationSuccess from '../../screens/main/reservation/success';
@@ -52,6 +53,8 @@ export default function StackHome() {
           headerTitle: '',
         }}
       />
+
+      <Stack.Screen name="StayBooking" component={StayBooking} />
       <Stack.Screen name="Resevation" component={Resevation} options={{}} />
       <Stack.Screen name="ReservationSuccess" component={ReservationSuccess} />
       <Stack.Screen name="ReservationTicket" component={ReservationTicket} />

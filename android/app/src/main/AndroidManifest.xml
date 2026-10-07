@@ -30,8 +30,6 @@
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="barmejShare" />
-            <data android:host="barmej.page.link" android:scheme="http"/>
-            <data android:host="barmej.page.link" android:scheme="https"/>
        </intent-filter>
       </activity>
     </application>

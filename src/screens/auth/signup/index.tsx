@@ -109,28 +109,26 @@ export default function SignupScreen({navigation}: any) {
       confirmPassword: '',
     },
   });
-  const {mutate: siginUpMutate, isLoading} = useMutation(
-    (data: any) => signUpAPI(data),
-    {
-      onSuccess: () => {
-        toast.show({
-          placement: 'top',
-          render: () => {
-            return (
-              <Toast
-                message={'Votre compte est enregistré avec succès'}
-                status={'#008000'}
-              />
-            );
-          },
-        });
-        navigation.goBack();
-      },
-      onError: err => {
-        console.warn('data', err);
-      },
+  const {mutate: siginUpMutate, isPending: isLoading} = useMutation({
+    mutationFn: (data: any) => signUpAPI(data),
+    onSuccess: () => {
+      toast.show({
+        placement: 'top',
+        render: () => {
+          return (
+            <Toast
+              message={'Votre compte est enregistré avec succès'}
+              status={'#008000'}
+            />
+          );
+        },
+      });
+      navigation.goBack();
     },
-  );
+    onError: err => {
+      console.warn('data', err);
+    },
+  });
 
   const onSubmit = (data: any) => {
     Keyboard.dismiss();
@@ -150,7 +148,7 @@ export default function SignupScreen({navigation}: any) {
   return (
     <ScrollView
       style={{backgroundColor: Color.background}}
-      contentContainerStyle={{paddingBottom: 24}}
+      contentContainerStyle={layoutStyles.style1}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
       {<LoadingSpinner visible={isLoading} />}
@@ -214,8 +212,8 @@ export default function SignupScreen({navigation}: any) {
                       el.name === 'userMail'
                         ? 'email-address'
                         : el.name === 'userMobile'
-                        ? 'phone-pad'
-                        : 'default'
+                          ? 'phone-pad'
+                          : 'default'
                     }
                     autoCapitalize={
                       el.name === 'userMail' ? 'none' : 'sentences'
@@ -298,7 +296,7 @@ export default function SignupScreen({navigation}: any) {
                   accessibilityLabel="Genre"
                   placeholder="Genre"
                   _selectedItem={{
-                    endIcon: <CheckIcon size="5" color={'#45377A'} />,
+                    endIcon: <CheckIcon size="5" color={'#33264D'} />,
                   }}
                   mt={1}
                   onValueChange={itemValue => onChange(itemValue)}>
@@ -337,7 +335,9 @@ export default function SignupScreen({navigation}: any) {
             borderRadius={16}
             backgroundColor={Color.main}
             isDisabled={!policyCheck || isLoading}
-            onPress={() => void handleSubmit(onSubmit)()}>
+            onPress={() => {
+              void handleSubmit(onSubmit)();
+            }}>
             Créer mon compte
           </Button>
           <Box flexDirection={'row'} mt={4} mb={5} justifyContent={'center'}>
@@ -364,3 +364,7 @@ export default function SignupScreen({navigation}: any) {
     </ScrollView>
   );
 }
+
+const layoutStyles = {
+  style1: {paddingBottom: 24},
+} as const;

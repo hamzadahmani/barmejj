@@ -41,17 +41,15 @@ export default function LoginScreen({navigation}: any) {
     resolver: yupResolver(schema),
     defaultValues: {email: '', password: ''},
   });
-  const {mutate: siginMutate, isLoading} = useMutation(
-    (data: any) => signInAPI(data),
-    {
-      onSuccess: res => {
-        login(res);
-      },
-      onError: err => {
-        console.warn('data', err);
-      },
+  const {mutate: siginMutate, isPending: isLoading} = useMutation({
+    mutationFn: (data: any) => signInAPI(data),
+    onSuccess: res => {
+      login(res);
     },
-  );
+    onError: err => {
+      console.warn('data', err);
+    },
+  });
 
   const onSubmit = (data: any) => {
     Keyboard.dismiss();
@@ -71,7 +69,7 @@ export default function LoginScreen({navigation}: any) {
       backgroundColor={Color.background}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{paddingBottom: 36}}>
+      contentContainerStyle={layoutStyles.style1}>
       <LoadingSpinner visible={isLoading} />
       <Box
         bg={Color.main}
@@ -160,7 +158,8 @@ export default function LoginScreen({navigation}: any) {
                   placeholder="Votre mot de passe"
                   InputLeftElement={<SvgComponentPassword />}
                   InputRightElement={
-                    <Pressable onPress={() => setShowPassword(value => !value)}>
+                    <Pressable
+                      onPress={() => setShowPassword(visible => !visible)}>
                       <Text
                         color={Color.main}
                         fontSize={11}
@@ -200,7 +199,9 @@ export default function LoginScreen({navigation}: any) {
             borderRadius={16}
             backgroundColor={Color.main}
             isDisabled={isLoading}
-            onPress={() => void handleSubmit(onSubmit)()}>
+            onPress={() => {
+              void handleSubmit(onSubmit)();
+            }}>
             Connexion
           </Button>
           <Box flexDirection={'row'} mt={4} justifyContent={'center'}>
@@ -223,8 +224,11 @@ export default function LoginScreen({navigation}: any) {
             </Pressable>
           </Box>
         </Box>
-
       </Flex>
     </ScrollView>
   );
 }
+
+const layoutStyles = {
+  style1: {paddingBottom: 36},
+} as const;

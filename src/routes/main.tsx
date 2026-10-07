@@ -3,10 +3,11 @@ import {useAuth} from './auth/authProvider';
 import {createStackNavigator} from '@react-navigation/stack';
 import AuthStack from './auth';
 import TabNavigation from './home';
+import InterestOnboardingScreen from '../screens/onboarding/InterestOnboardingScreen';
 const Stack = createStackNavigator();
 
 const MainStack = () => {
-  const {user} = useAuth();
+  const {user, userInfo} = useAuth();
 
   return (
     <Stack.Navigator>
@@ -14,7 +15,7 @@ const MainStack = () => {
         <>
           <Stack.Screen
             name="Main"
-            component={TabNavigation}
+            component={userInfo?.onboardingRequired === false ? TabNavigation : InterestOnboardingScreen}
             options={{
               headerShown: false,
             }}

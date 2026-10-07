@@ -11,6 +11,7 @@ import WaitlistScreen from '../../screens/main/community/waitlist';
 import GroupPlannerScreen from '../../screens/main/community/groupPlanner';
 import SmartAssistantScreen from '../../screens/main/community/assistant';
 import DetailsPlace from '../../screens/main/detailsPlace';
+import StayBooking from '../../screens/main/stay';
 import PersonalizationScreen from '../../screens/main/profil/personalization';
 import NotficationScreen from '../../screens/notfication';
 const Stack = createStackNavigator();
@@ -81,6 +82,7 @@ export default function StackProfil() {
       <Stack.Screen name="GroupPlanner" component={GroupPlannerScreen} options={{headerShown: false}} />
       <Stack.Screen name="SmartAssistant" component={SmartAssistantScreen} options={{headerShown: false}} />
       <Stack.Screen name="Details" component={DetailsPlace} options={{headerShown: false}} />
+      <Stack.Screen name="StayBooking" component={StayBooking} options={{headerShown: false}} />
       <Stack.Screen name="Personalization" component={PersonalizationScreen} options={{headerShown: false}} />
       <Stack.Screen name="Notifications" component={NotficationScreen} options={{headerShown: false}} />
     </Stack.Navigator>

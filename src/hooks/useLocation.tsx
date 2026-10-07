@@ -1,39 +1,31 @@
-import {useEffect, useState} from 'react';
-import Geolocation, {
-  GeolocationResponse,
-} from '@react-native-community/geolocation';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {requestLocation} from '../helpers/location';
 
-interface GeolocationHookResult {
-  position: GeolocationResponse | null;
-  error: any;
-}
-
-const useGeolocation = (): GeolocationHookResult => {
-  const [position, setPosition] = useState<GeolocationResponse | null>(null);
-  const [error, setError] = useState<any>(null);
-  useEffect(() => {
-    Geolocation.getCurrentPosition(info => setPosition(info));
-
-    const watchId = Geolocation.watchPosition(
-      position => {
-        setPosition(position);
-      },
-      error => {
-        setError(error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 10000,
-      },
-    );
-
-    return () => {
-      Geolocation.clearWatch(watchId);
-    };
+// This hook is mounted only after the user opens the nearby map.
+export default function useGeolocation() {
+  const [position, setPosition] = useState<{
+    coords: {latitude: number; longitude: number};
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const active = useRef(false);
+  const retry = useCallback(async () => {
+    setError(null);
+    try {
+      const coords = await requestLocation();
+      if (active.current) setPosition({coords});
+    } catch (failure) {
+      if (active.current)
+        setError(
+          failure instanceof Error ? failure.message : 'Position indisponible',
+        );
+    }
   }, []);
-
-  return {position, error};
-};
-
-export default useGeolocation;
+  useEffect(() => {
+    active.current = true;
+    retry();
+    return () => {
+      active.current = false;
+    };
+  }, [retry]);
+  return {position, error, retry};
+}

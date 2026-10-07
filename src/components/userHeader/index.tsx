@@ -5,7 +5,6 @@ import {StyledUserName} from './styles';
 
 export default function UserDetails() {
   const {userInfo} = useContext(AuthContext) || {};
-  console.log('userInfo', userInfo);
   return (
     <HStack alignItems="center" justifyContent="space-between">
       <HStack alignItems="center">
@@ -35,7 +34,7 @@ export default function UserDetails() {
         width={10}
         height={10}
         borderRadius={14}
-        bg="#EEEAF8"
+        bg="#EFE9FC"
         alignItems="center"
         justifyContent="center">
         <Text fontSize="lg">⌁</Text>

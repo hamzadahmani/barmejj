@@ -2,6 +2,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import React from 'react';
 import MyFavorit from '../../screens/main/favorit';
 import PlaceDetails from '../../screens/main/detailsPlace';
+import StayBooking from '../../screens/main/stay';
 import Resevation from '../../screens/main/reservation';
 import ReservationSuccess from '../../screens/main/reservation/success';
 import ReservationTicket from '../../screens/main/reservation/ticket';
@@ -14,7 +15,7 @@ export default function FavoriteStack() {
       screenOptions={{
         headerShown: false,
         headerTitle: '',
-        headerStyle: {backgroundColor: '#F7F7FB'},
+        headerStyle: {backgroundColor: '#F8F6FC'},
       }}>
       <Stack.Screen
         name="FavoriteList"
@@ -22,6 +23,7 @@ export default function FavoriteStack() {
         options={{headerShown: false}}
       />
       <Stack.Screen name="Details" component={PlaceDetails} />
+      <Stack.Screen name="StayBooking" component={StayBooking} />
       <Stack.Screen
         name="Resevation"
         component={Resevation}

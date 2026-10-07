@@ -1,79 +1,92 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Barmej
 
-# Getting Started
+Application mobile React Native. Utiliser **npm** et le fichier `package-lock.json`
+pour conserver les versions et les correctifs de sécurité validés.
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+## Installation
 
-## Step 1: Start the Metro Server
+- Node.js 22.13+ (branche 22), 24.3+ (branche 24) ou 26+.
+- Android : JDK 17, Android SDK et NDK configurés dans Android Studio.
+- iOS : macOS, Xcode et CocoaPods.
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
-
-To start Metro, run the following command from the _root_ of your React Native project:
-
-```bash
-# using npm
-npm start
-
-# OR using Yarn
-yarn start
+```sh
+npm ci
 ```
 
-## Step 2: Start your Application
+Le script `postinstall` applique les adaptations NativeBase / React Native et
+Metro / image-size. Ne pas utiliser `--ignore-scripts` pour une installation
+normale. `.npmrc` conserve la résolution des dépendances compatible avec les
+anciennes déclarations de compatibilité de NativeBase.
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
+## Développement Android
 
-### For Android
+```sh
+npm run android:metro
+```
 
-```bash
-# using npm
+Dans un second terminal, avec un émulateur ou appareil connecté :
+
+```sh
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### For iOS
+Ces commandes sélectionnent l'API locale. `npm run api:online` sélectionne
+l'API distante. Sous PowerShell, utiliser `npm.cmd` / `npx.cmd` si les scripts
+PowerShell sont bloqués.
 
-```bash
-# using npm
+## Vérifications
+
+```sh
+npm run check
+npm audit
+```
+
+Les tests couvrent notamment Explorer, les routes, la session, le cache,
+les notifications et les adaptations de dépendances.
+
+## Compilation locale Android
+
+```sh
+npm run build:android:debug
+```
+
+Cette commande sélectionne l'API distante et produit un APK local ; elle ne
+publie pas l'application. Pour garder la configuration API actuelle, lancer
+`scripts/build-android-debug.cmd` directement.
+
+## iOS
+
+iOS 15.1 minimum. Sur macOS avec Xcode 26.2 ou supérieur et Ruby 3.2 ou supérieur :
+
+```sh
+npm ci
+sh scripts/prepare-ios.sh
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+La préparation met à jour le verrouillage CocoaPods historique ; vérifier et
+versionner ensuite `ios/Podfile.lock` et `Gemfile.lock`. Les installations
+suivantes utilisent `cd ios && bundle exec pod install`.
+Firebase utilise des frameworks statiques et Maps le sous-module Google.
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+Pour vérifier la compilation sans signature ni installation :
 
-## Step 3: Modifying your App
+```sh
+xcodebuild -workspace ios/Barmej.xcworkspace -scheme Barmej -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+```
 
-Now that you have successfully run the app, let's modify it.
+Pour les tests natifs, sélectionner un simulateur disponible dans Xcode et
+exécuter le schéma Barmej (Product → Test). Pour les notifications sur iPhone,
+sélectionner l'équipe Apple et un profil autorisant Push Notifications, puis
+vérifier la clé APNs dans Firebase. Xcode adapte l'environnement APNs lors de
+la signature de distribution. Aucune clé ni équipe n'est générée par le dépôt.
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+Voir [les adaptations et les contrôles iOS](IOS_UPGRADE.md).
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+## Notes de maintenance
 
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- [Migration React Query](REACT_QUERY_MIGRATION.md)
+- `vendor/lodash-pick` remplace le paquet abandonné par `lodash/pick` maintenu.
+- `scripts/apply-compatibility-fixes.cjs` applique les adaptations au réinstall.
+- React reste aligné sur le moteur React Native (19.2.3). Babel 7, TypeScript 6
+  et ESLint 9 correspondent aux contraintes des outils React Native installés.

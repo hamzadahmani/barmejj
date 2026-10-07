@@ -1,3 +1,5 @@
+import {queryKeys} from '../../query/keys';
+import {keepPreviousData} from '@tanstack/react-query';
 import {useQuery} from '@tanstack/react-query';
 import {
   Box,
@@ -17,7 +19,20 @@ import {isOpen} from '../../helpers/functions';
 import {getPlacesBySearch} from '../../services/search';
 import VectorIcon from '../vectorIcon';
 
-export default function SearchBar({navigation}: any) {
+export default function SearchBar({navigation, appearance = 'light'}: any) {
+  const pearl = appearance === 'pearl';
+  const palette = pearl
+    ? {
+        ...Color,
+        main: '#7251C9',
+        mainLight: '#EEE8FC',
+        border: '#E6E0F1',
+        text: '#242337',
+        muted: '#706A80',
+      }
+    : Color;
+  const surface = pearl ? '#FFFFFF' : 'white';
+  const selectedSurface = pearl ? '#7151BD' : palette.main;
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -26,14 +41,32 @@ export default function SearchBar({navigation}: any) {
   const [ambience, setAmbience] = useState<string | undefined>();
   const [openNow, setOpenNow] = useState(false);
   const normalizedQuery = query.trim();
-  const searchEnabled = normalizedQuery.length >= 2 || verified || openNow || Boolean(maxPrice) || Boolean(ambience);
-  const filters = {query: normalizedQuery, verified: verified ? 'true' : undefined, openNow: openNow ? 'true' : undefined, maxPrice, sort, ambience};
+  const searchEnabled =
+    normalizedQuery.length >= 2 ||
+    verified ||
+    openNow ||
+    Boolean(maxPrice) ||
+    Boolean(ambience);
+  const filters = {
+    query: normalizedQuery,
+    verified: verified ? 'true' : undefined,
+    openNow: openNow ? 'true' : undefined,
+    maxPrice,
+    sort,
+    ambience,
+  };
 
-  const {data: results, isFetching} = useQuery(
-    ['getPlacesBySearch', filters],
-    getPlacesBySearch,
-    {enabled: searchEnabled, keepPreviousData: true},
-  );
+  const {
+    data: results,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: [...queryKeys.getPlacesBySearch, filters],
+    queryFn: getPlacesBySearch,
+    enabled: searchEnabled,
+    placeholderData: keepPreviousData,
+  });
 
   const openPlace = (idPlace: number) => {
     Keyboard.dismiss();
@@ -48,6 +81,8 @@ export default function SearchBar({navigation}: any) {
         height={54}
         fontSize={15}
         value={query}
+        accessibilityLabel="Rechercher une adresse"
+        testID="explorer-search"
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         onChangeText={setQuery}
@@ -57,27 +92,33 @@ export default function SearchBar({navigation}: any) {
         InputLeftElement={
           <Box
             ml={3}
-            bg={Color.mainLight}
+            bg={palette.mainLight}
             width={9}
             height={9}
             borderRadius={12}
             alignItems="center"
             justifyContent="center">
-            <VectorIcon name="search" size={18} color={Color.main} />
+            <VectorIcon name="search" size={18} color={palette.main} />
           </Box>
         }
         InputRightElement={
           isFetching ? (
-            <Spinner mr={4} size="sm" color={Color.main} />
+            <Spinner mr={4} size="sm" color={palette.main} />
           ) : query ? (
-            <Pressable onPress={() => setQuery('')} p={3}>
-              <VectorIcon name="x" size={16} color="#777382" />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Effacer la recherche"
+              onPress={() => setQuery('')}
+              p={3}>
+              <VectorIcon name="x" size={16} color="#6E6880" />
             </Pressable>
           ) : undefined
         }
-        bgColor="#FFFFFF"
+        bgColor={surface}
+        color={palette.text}
+        _focus={{backgroundColor: surface, borderColor: palette.main}}
         borderWidth={focused ? 2 : 1}
-        borderColor={focused ? Color.main : Color.border}
+        borderColor={focused ? palette.main : palette.border}
         borderRadius={18}
       />
 
@@ -89,13 +130,13 @@ export default function SearchBar({navigation}: any) {
               onPress={() => setQuery(suggestion)}
               mr={2}>
               <Box
-                bg="white"
+                bg={surface}
                 borderWidth={1}
-                borderColor={Color.border}
+                borderColor={palette.border}
                 borderRadius={14}
                 px={3}
                 py={2}>
-                <Text color={Color.muted} fontSize="xs" fontWeight={700}>
+                <Text color={palette.muted} fontSize="xs" fontWeight={700}>
                   {suggestion}
                 </Text>
               </Box>
@@ -104,37 +145,153 @@ export default function SearchBar({navigation}: any) {
         </Flex>
       )}
 
-      {focused && <ScrollView horizontal showsHorizontalScrollIndicator={false} mt={3} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => setOpenNow(value => !value)} mr={2}><Box bg={openNow ? Color.main : 'white'} borderWidth={1} borderColor={openNow ? Color.main : Color.border} borderRadius={14} px={3} py={2}><Text color={openNow ? 'white' : Color.muted} fontSize="xs" fontWeight={700}>Disponible maintenant</Text></Box></Pressable>
-        <Pressable onPress={() => setVerified(value => !value)} mr={2}><Box bg={verified ? Color.main : 'white'} borderWidth={1} borderColor={verified ? Color.main : Color.border} borderRadius={14} px={3} py={2}><Text color={verified ? 'white' : Color.muted} fontSize="xs" fontWeight={700}>✓ Vérifiés</Text></Box></Pressable>
-        {[40,80].map(price => <Pressable key={price} onPress={() => setMaxPrice(maxPrice === price ? undefined : price)} mr={2}><Box bg={maxPrice===price ? Color.main : 'white'} borderWidth={1} borderColor={maxPrice===price ? Color.main : Color.border} borderRadius={14} px={3} py={2}><Text color={maxPrice===price ? 'white' : Color.muted} fontSize="xs" fontWeight={700}>≤ {price} TND</Text></Box></Pressable>)}
-        {['Calme','Romantique','Musique'].map(value => <Pressable key={value} onPress={() => setAmbience(ambience===value ? undefined : value)} mr={2}><Box bg={ambience===value ? Color.main : 'white'} borderWidth={1} borderColor={ambience===value ? Color.main : Color.border} borderRadius={14} px={3} py={2}><Text color={ambience===value ? 'white' : Color.muted} fontSize="xs" fontWeight={700}>{value}</Text></Box></Pressable>)}
-        <Pressable onPress={() => setSort(sort==='price'?'relevance':'price')} mr={2}><Box bg={sort==='price' ? Color.main : 'white'} borderWidth={1} borderColor={sort==='price' ? Color.main : Color.border} borderRadius={14} px={3} py={2}><Text color={sort==='price' ? 'white' : Color.muted} fontSize="xs" fontWeight={700}>Prix ↑</Text></Box></Pressable>
-      </ScrollView>}
+      {focused && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          mt={3}
+          keyboardShouldPersistTaps="handled">
+          <Pressable onPress={() => setOpenNow(value => !value)} mr={2}>
+            <Box
+              bg={openNow ? selectedSurface : surface}
+              borderWidth={1}
+              borderColor={openNow ? palette.main : palette.border}
+              borderRadius={14}
+              px={3}
+              py={2}>
+              <Text
+                color={openNow ? 'white' : palette.muted}
+                fontSize="xs"
+                fontWeight={700}>
+                Disponible maintenant
+              </Text>
+            </Box>
+          </Pressable>
+          <Pressable onPress={() => setVerified(value => !value)} mr={2}>
+            <Box
+              bg={verified ? selectedSurface : surface}
+              borderWidth={1}
+              borderColor={verified ? palette.main : palette.border}
+              borderRadius={14}
+              px={3}
+              py={2}>
+              <VectorIcon
+                name="check"
+                size={14}
+                color={verified ? 'white' : palette.main}
+              />
+              <Text
+                color={verified ? 'white' : palette.muted}
+                fontSize="xs"
+                fontWeight={700}>
+                Vérifiés
+              </Text>
+            </Box>
+          </Pressable>
+          {[40, 80].map(price => (
+            <Pressable
+              key={price}
+              onPress={() =>
+                setMaxPrice(maxPrice === price ? undefined : price)
+              }
+              mr={2}>
+              <Box
+                bg={maxPrice === price ? selectedSurface : surface}
+                borderWidth={1}
+                borderColor={maxPrice === price ? palette.main : palette.border}
+                borderRadius={14}
+                px={3}
+                py={2}>
+                <Text
+                  color={maxPrice === price ? 'white' : palette.muted}
+                  fontSize="xs"
+                  fontWeight={700}>
+                  ≤ {price} TND
+                </Text>
+              </Box>
+            </Pressable>
+          ))}
+          {['Calme', 'Romantique', 'Musique'].map(value => (
+            <Pressable
+              key={value}
+              onPress={() =>
+                setAmbience(ambience === value ? undefined : value)
+              }
+              mr={2}>
+              <Box
+                bg={ambience === value ? selectedSurface : surface}
+                borderWidth={1}
+                borderColor={ambience === value ? palette.main : palette.border}
+                borderRadius={14}
+                px={3}
+                py={2}>
+                <Text
+                  color={ambience === value ? 'white' : palette.muted}
+                  fontSize="xs"
+                  fontWeight={700}>
+                  {value}
+                </Text>
+              </Box>
+            </Pressable>
+          ))}
+          <Pressable
+            onPress={() => setSort(sort === 'price' ? 'relevance' : 'price')}
+            mr={2}>
+            <Box
+              bg={sort === 'price' ? selectedSurface : surface}
+              borderWidth={1}
+              borderColor={sort === 'price' ? palette.main : palette.border}
+              borderRadius={14}
+              px={3}
+              py={2}>
+              <Text
+                color={sort === 'price' ? 'white' : palette.muted}
+                fontSize="xs"
+                fontWeight={700}>
+                Prix croissant
+              </Text>
+            </Box>
+          </Pressable>
+        </ScrollView>
+      )}
 
       {searchEnabled && (
-        <Box bg="white" borderRadius={20} mt={3} shadow={4} overflow="hidden">
+        <Box bg={surface} borderRadius={20} mt={3} shadow={4} overflow="hidden">
           <Flex
             direction="row"
             justifyContent="space-between"
             alignItems="center"
             px={4}
             py={3}>
-            <Text color={Color.text} fontSize="sm" fontWeight={800}>
+            <Text color={palette.text} fontSize="sm" fontWeight={800}>
               Résultats
             </Text>
-            <Text color={Color.muted} fontSize="xs">
+            <Text color={palette.muted} fontSize="xs">
               {results?.length ?? 0} trouvé(s)
             </Text>
           </Flex>
           <Divider />
-          {!isFetching && results?.length === 0 && (
+          {isError ? (
+            <Box p={4}>
+              <Text color={palette.text}>Recherche indisponible.</Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  refetch();
+                }}
+                minHeight={44}
+                justifyContent="center">
+                <Text color={palette.main}>Réessayer</Text>
+              </Pressable>
+            </Box>
+          ) : null}
+          {!isFetching && !isError && results?.length === 0 && (
             <Box px={5} py={6} alignItems="center">
-              <Text fontSize="2xl">⌕</Text>
-              <Text color={Color.text} fontWeight={700} mt={2}>
+              <VectorIcon name="search" size={28} />
+              <Text color={palette.text} fontWeight={700} mt={2}>
                 Aucune adresse trouvée
               </Text>
-              <Text color={Color.muted} fontSize="xs" mt={1}>
+              <Text color={palette.muted} fontSize="xs" mt={1}>
                 Essayez un autre nom ou une autre ambiance.
               </Text>
             </Box>
@@ -154,20 +311,56 @@ export default function SearchBar({navigation}: any) {
                   />
                   <Box flex={1} ml={3}>
                     <Text
-                      color={Color.text}
+                      color={palette.text}
                       fontSize="sm"
                       fontWeight={800}
                       numberOfLines={1}>
                       {item.placeName}
                     </Text>
                     <Text
-                      color={Color.muted}
+                      color={palette.muted}
                       fontSize="xs"
                       mt={1}
                       numberOfLines={1}>
                       {item.subTitle || 'Établissement'}
                     </Text>
-                    <Text color={Color.main} fontSize="10" fontWeight={800} mt={1}>{item.verified ? '✓ Vérifié  ·  ' : ''}{item.rating ? `${item.rating} ★ (${item.reviewCount})` : 'Nouveau'}{item.averagePrice ? `  ·  ${item.averagePrice} TND` : ''}</Text>
+                    <Flex
+                      direction="row"
+                      alignItems="center"
+                      flexWrap="wrap"
+                      mt={1}>
+                      {item.verified ? (
+                        <>
+                          <VectorIcon name="check" size={12} />
+                          <Text color={palette.main} fontSize="10">
+                            {' '}
+                            Vérifié ·{' '}
+                          </Text>
+                        </>
+                      ) : null}
+                      {Number(item.reviewCount) > 0 &&
+                      Number(item.rating) >= 1 &&
+                      Number(item.rating) <= 5 ? (
+                        <>
+                          <VectorIcon name="star" size={12} />
+                          <Text color={palette.main} fontSize="10">
+                            {' '}
+                            {Number(item.rating).toFixed(1)} ({item.reviewCount}{' '}
+                            avis)
+                          </Text>
+                        </>
+                      ) : (
+                        <Text color={palette.muted} fontSize="10">
+                          Pas encore d’avis
+                        </Text>
+                      )}
+                      {item.averagePrice != null ? (
+                        <Text color={palette.main} fontSize="10">
+                          {' '}
+                          · {item.averagePrice} TND
+                        </Text>
+                      ) : null}
+                    </Flex>
                   </Box>
                   <Box
                     bg={isOpen(item.horaire) ? '#E8F6EF' : '#FFF0F1'}

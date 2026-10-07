@@ -12,7 +12,7 @@ export default function ReservationStack() {
       screenOptions={{
         headerShown: false,
         headerTitle: '',
-        headerStyle: {backgroundColor: '#F7F7FB'},
+        headerStyle: {backgroundColor: '#F8F6FC'},
       }}>
       <Stack.Screen
         name="ReservationList"

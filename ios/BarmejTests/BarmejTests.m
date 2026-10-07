@@ -1,66 +1,29 @@
 #import <UIKit/UIKit.h>
 #import <XCTest/XCTest.h>
-
-#import <React/RCTLog.h>
-#import <React/RCTRootView.h>
-
-#define TIMEOUT_SECONDS 600
-#define TEXT_TO_LOOK_FOR @"Welcome to React"
+#import "../Barmej/AppDelegate.h"
 
 @interface BarmejTests : XCTestCase
-
 @end
 
 @implementation BarmejTests
-
-- (BOOL)findSubviewInView:(UIView *)view matching:(BOOL (^)(UIView *view))test
+- (void)testNativeApplicationWindowIsReady
 {
-  if (test(view)) {
-    return YES;
-  }
-  for (UIView *subview in [view subviews]) {
-    if ([self findSubviewInView:subview matching:test]) {
-      return YES;
-    }
-  }
-  return NO;
+  AppDelegate *delegate = (AppDelegate *)UIApplication.sharedApplication.delegate;
+  XCTAssertTrue([delegate isKindOfClass:AppDelegate.class]);
+  XCTAssertNotNil(delegate.window);
+  XCTAssertNotNil(delegate.window.rootViewController);
+  XCTAssertNotNil(delegate.window.rootViewController.view);
+  XCTAssertFalse(delegate.window.hidden);
 }
 
-- (void)testRendersWelcomeScreen
+- (void)testRequiredPermissionsAndShareSchemeAreConfigured
 {
-  UIViewController *vc = [[[RCTSharedApplication() delegate] window] rootViewController];
-  NSDate *date = [NSDate dateWithTimeIntervalSinceNow:TIMEOUT_SECONDS];
-  BOOL foundElement = NO;
-
-  __block NSString *redboxError = nil;
-#ifdef DEBUG
-  RCTSetLogFunction(
-      ^(RCTLogLevel level, RCTLogSource source, NSString *fileName, NSNumber *lineNumber, NSString *message) {
-        if (level >= RCTLogLevelError) {
-          redboxError = message;
-        }
-      });
-#endif
-
-  while ([date timeIntervalSinceNow] > 0 && !foundElement && !redboxError) {
-    [[NSRunLoop mainRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
-    [[NSRunLoop mainRunLoop] runMode:NSRunLoopCommonModes beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
-
-    foundElement = [self findSubviewInView:vc.view
-                                  matching:^BOOL(UIView *view) {
-                                    if ([view.accessibilityLabel isEqualToString:TEXT_TO_LOOK_FOR]) {
-                                      return YES;
-                                    }
-                                    return NO;
-                                  }];
-  }
-
-#ifdef DEBUG
-  RCTSetLogFunction(RCTDefaultLogFunction);
-#endif
-
-  XCTAssertNil(redboxError, @"RedBox error: %@", redboxError);
-  XCTAssertTrue(foundElement, @"Couldn't find element with text '%@' in %d seconds", TEXT_TO_LOOK_FOR, TIMEOUT_SECONDS);
+  NSDictionary *info = NSBundle.mainBundle.infoDictionary;
+  XCTAssertGreaterThan([info[@"NSLocationWhenInUseUsageDescription"] length], 0);
+  XCTAssertGreaterThan([info[@"NSPhotoLibraryUsageDescription"] length], 0);
+  NSArray *urlTypes = info[@"CFBundleURLTypes"];
+  XCTAssertTrue([urlTypes.firstObject[@"CFBundleURLSchemes"] containsObject:@"barmejApp"]);
+  XCTAssertTrue([info[@"UIBackgroundModes"] containsObject:@"remote-notification"]);
+  XCTAssertNotNil([NSBundle.mainBundle URLForResource:@"PrivacyInfo" withExtension:@"xcprivacy"]);
 }
-
 @end

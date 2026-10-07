@@ -97,7 +97,8 @@ export default function DatePickerForm({
             borderRadius={'5px'}
             backgroundColor={Color.main}
             onPress={() => {
-              onChange(selectedDate), setModalVisible(false);
+              onChange(selectedDate);
+              setModalVisible(false);
             }}>
             Confirmer
           </Button>

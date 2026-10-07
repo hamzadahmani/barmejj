@@ -78,3 +78,6 @@ android/app/release/
 android/.gradle-user/
 android/.kotlin/
 *.apk
+
+_backup/
+_to_delete/

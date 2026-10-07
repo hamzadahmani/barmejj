@@ -1,0 +1,90 @@
+appId: com.barmej
+name: Explorer - navigation et découverte
+---
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: tab-explorer
+    timeout: 60000
+- tapOn:
+    id: tab-explorer
+- scrollUntilVisible:
+    element:
+      id: explorer-profile
+    direction: UP
+    timeout: 20000
+- tapOn:
+    id: explorer-profile
+- assertVisible: 'VOTRE ESPACE'
+- tapOn:
+    id: tab-explorer
+- scrollUntilVisible:
+    element:
+      id: interest-gaming
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: interest-gaming
+- extendedWaitUntil:
+    visible: 'Gaming'
+    timeout: 20000
+- assertVisible: 'À découvrir'
+- back
+- scrollUntilVisible:
+    element:
+      id: explorer-favorites
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: explorer-favorites
+- assertVisible: '.*favori.*'
+- back
+- scrollUntilVisible:
+    element:
+      id: explorer-experience
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: explorer-experience
+- assertVisible: 'Expérience Barmej'
+- tapOn:
+    id: tab-explorer
+- scrollUntilVisible:
+    element:
+      id: explorer-express
+    direction: UP
+    timeout: 20000
+- tapOn:
+    id: explorer-express
+- assertVisible: 'BARMEJLI'
+- assertVisible: 'J’ai 30 DT et 2 heures pour une sortie à Tunis.'
+- tapOn:
+    id: tab-explorer
+- scrollUntilVisible:
+    element:
+      id: explorer-map
+    direction: UP
+    timeout: 30000
+- tapOn:
+    id: explorer-map
+- runFlow:
+    when:
+      visible: 'While using the app'
+    commands:
+      - tapOn: 'While using the app'
+- extendedWaitUntil:
+    visible: 'Retour'
+    timeout: 30000
+- back
+- tapOn:
+    id: tab-videos
+- extendedWaitUntil:
+    visible: 'Pour vous'
+    timeout: 30000
+- tapOn:
+    id: tab-reservations
+- assertVisible: 'Mes réservations'
+- tapOn:
+    id: tab-explorer
+- takeScreenshot: explorer-navigation

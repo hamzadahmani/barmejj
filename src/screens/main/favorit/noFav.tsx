@@ -11,12 +11,7 @@ export default function NoFavorit() {
       justifyContent={'center'}
       flex={1}>
       <View
-        style={{
-          borderRadius: 28,
-          borderWidth: 8,
-          borderColor: '#EEEAF8',
-          backgroundColor: '#E4DDF5',
-        }}>
+        style={layoutStyles.style1}>
         <SvgComponentAlert />
       </View>
       <Text
@@ -40,3 +35,12 @@ export default function NoFavorit() {
     </Flex>
   );
 }
+
+const layoutStyles = {
+style1: {
+          borderRadius: 28,
+          borderWidth: 8,
+          borderColor: '#EFE9FC',
+          backgroundColor: '#E4DDF5',
+        }
+} as const;
