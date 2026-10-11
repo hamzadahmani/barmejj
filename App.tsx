@@ -18,7 +18,13 @@ import AppErrorBoundary from './src/components/AppErrorBoundary';
 import {nativeBaseTheme} from './src/theme/nativeBaseTheme';
 
 // Écrans dont le haut est sombre : barre d'état claire et fond nuit derrière.
-const darkTopScreens = new Set(['Categories', 'Barmejli', 'Details', 'Resevation', 'StayBooking']);
+const darkTopScreens = new Set([
+  'Categories',
+  'Barmejli',
+  'Details',
+  'Resevation',
+  'StayBooking',
+]);
 
 function App(): React.JSX.Element {
   const [queryClient] = useState(createQueryClient);
@@ -26,7 +32,9 @@ function App(): React.JSX.Element {
     useNavigationContainerRef<Record<string, object | undefined>>();
   const [exploring, setExploring] = useState(false);
   const syncAppearance = () =>
-    setExploring(darkTopScreens.has(navigationRef.getCurrentRoute()?.name ?? ''));
+    setExploring(
+      darkTopScreens.has(navigationRef.getCurrentRoute()?.name ?? ''),
+    );
   return (
     <AppErrorBoundary>
       <SafeAreaProvider>

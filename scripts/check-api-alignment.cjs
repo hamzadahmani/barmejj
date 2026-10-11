@@ -51,7 +51,7 @@ for (const file of files(back + '/src')) {
     if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression)) {
       const {expression: obj, name} = n.expression;
       if (
-        ['app', 'router', 'barmejliRouter'].includes(obj.getText(source)) &&
+        ['app', 'router', 'barmejliRouter', 'staysRouter'].includes(obj.getText(source)) &&
         ['get', 'post', 'put', 'patch', 'delete'].includes(name.text)
       ) {
         const route = literal(n.arguments[0]);
@@ -64,6 +64,8 @@ for (const file of files(back + '/src')) {
                   ? '/v1/discovery'
                   : file.endsWith('barmejli.ts')
                   ? '/v1/barmejli'
+                  : file.endsWith('stays.ts')
+                  ? '/v1/stays'
                   : file.endsWith('menus.ts')
                   ? '/pro/places/:placeId/menus'
                   : '') + route,

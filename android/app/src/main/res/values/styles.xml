@@ -3,15 +3,18 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
-        <item name="android:windowBackground">@color/barmej_splash_background</item>
-        <item name="android:statusBarColor">@color/barmej_splash_background</item>
-        <item name="android:navigationBarColor">@color/barmej_splash_background</item>
+        <item name="android:windowBackground">@color/barmej_system_bars</item>
+        <item name="android:statusBarColor">@color/barmej_system_bars</item>
+        <item name="android:navigationBarColor">@color/barmej_system_bars</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
 
+    <!-- Lancement (Android 7 à 11) : fond violet et logo centré, repris à l'identique par l'animation JS. -->
     <style name="AppTheme.Starting" parent="AppTheme">
-        <item name="android:windowBackground">@color/barmej_splash_background</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">@color/barmej_splash_background</item>
+        <item name="android:navigationBarColor">@color/barmej_system_bars</item>
     </style>
 
 </resources>

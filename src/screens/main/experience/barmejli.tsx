@@ -17,7 +17,12 @@ type Plan = {
 const hour = (value: string) => new Date(value).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit', hour12: false});
 const paths = {back:'M15 18l-6-6 6-6',arrow:'M5 12h14m-5-5 5 5-5 5',refresh:'M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1',pin:'M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0ZM12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6',bookmark:'M6 3h12v18l-6-4-6 4Z',clock:'M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',check:'m5 12 4 4L19 6',spark:'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z',walk:'M13 4a1.5 1.5 0 1 0 0 .1M10 21l2-6 3 3v3M9 12l2-4 3 2 3 1M11 8l-2 7'};
 const Icon = ({name, color = '#514176', size = 20}: {name: keyof typeof paths; color?: string; size?: number}) => <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d={paths[name]} stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
-const suggestions = ['Dîner romantique à La Marsa, 120 DT', 'Brunch entre amis au Lac, 80 DT', 'Soirée calme à Sidi Bou Saïd, 50 DT'];
+type Mode = 'program' | 'single';
+const suggestionsByMode: Record<Mode, string[]> = {
+  program: ['Dîner romantique à La Marsa, 120 DT', 'Brunch entre amis au Lac, 80 DT', 'Soirée calme à Sidi Bou Saïd, 50 DT'],
+  single: ['Resto calme à La Marsa, 60 DT', 'Café avec vue à Sidi Bou Saïd, 30 DT', 'نحب resto pas cher fi Tunis, 40 DT'],
+};
+const modes: Array<{key: Mode; label: string}> = [{key: 'program', label: 'Programme complet'}, {key: 'single', label: 'Juste une adresse'}];
 // Majuscule initiale uniquement (l'ancien « capitalize » mettait une majuscule à chaque mot).
 const sentence = (value: string) => value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
 const arch = (x: number, w: number, top: number) => `M${x} 300 V${top + w / 2} A${w / 2} ${w / 2} 0 0 1 ${x + w} ${top + w / 2} V300`;
@@ -26,6 +31,9 @@ const duration = (minutes: number) => `${Math.floor(minutes / 60)}h${String(minu
 export default function BarmejliScreen({navigation, route}: any) {
   const [prompt, setPrompt] = useState(route?.params?.prompt || 'Sortie romantique à La Marsa samedi soir, budget 120 DT');
   useEffect(() => { if (typeof route?.params?.prompt === 'string') setPrompt(route.params.prompt); }, [route?.params?.prompt]);
+  const [mode, setMode] = useState<Mode>(route?.params?.mode === 'single' ? 'single' : 'program');
+  useEffect(() => { if (route?.params?.mode === 'single' || route?.params?.mode === 'program') setMode(route.params.mode); }, [route?.params?.mode]);
+  const suggestions = suggestionsByMode[mode];
   const [plan, setPlan] = useState<Plan | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +47,7 @@ export default function BarmejliScreen({navigation, route}: any) {
     }
     finally { setBusy(null); }
   };
-  const generate = () => action('generate', async () => (await request.post('v1/barmejli/generate', {prompt})).data, setPlan);
+  const generate = () => action('generate', async () => (await request.post('v1/barmejli/generate', mode === 'single' ? {prompt, stepCount: 1} : {prompt})).data, setPlan);
   const regenerate = () => plan && action('regenerate', async () => (await request.post(`v1/barmejli/${plan.id}/regenerate`)).data, setPlan);
   const replace = (position: number) => plan && action(`step-${position}`, async () => (await request.post(`v1/barmejli/${plan.id}/steps/${position}/replace`)).data, setPlan);
   const adapt = () => plan && action('weather', async () => (await request.post(`v1/barmejli/${plan.id}/adapt-weather`)).data, result => result.plan ? setPlan(result.plan) : Alert.alert('Météo stable', 'Votre programme reste adapté.'));
@@ -72,12 +80,15 @@ export default function BarmejliScreen({navigation, route}: any) {
         <Text style={[s.label, s.grow]}>Qu’avez-vous en tête ?</Text>
         <Text style={s.counter}>{prompt.length}/500</Text>
       </View>
-      <TextInput value={prompt} onChangeText={setPrompt} multiline maxLength={500} placeholder="Brunch entre amis au Lac dimanche, 80 DT" placeholderTextColor={night.muted} style={s.input}/>
+      <View accessibilityRole="tablist" style={s.modes}>
+        {modes.map(item => <Pressable key={item.key} accessibilityRole="tab" accessibilityState={{selected: mode === item.key}} onPress={() => setMode(item.key)} style={[s.mode, mode === item.key && s.modeActive]}><Text style={[s.modeText, mode === item.key && s.modeTextActive]}>{item.label}</Text></Pressable>)}
+      </View>
+      <TextInput value={prompt} onChangeText={setPrompt} multiline maxLength={500} placeholder={mode === 'single' ? 'Resto calme pas cher à La Marsa, 50 DT' : 'Brunch entre amis au Lac dimanche, 80 DT'} placeholderTextColor={night.muted} style={s.input}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={s.chipsScroll} contentContainerStyle={s.chips}>
         {suggestions.map(idea => <Pressable key={idea} accessibilityRole="button" accessibilityLabel={`Idée : ${idea}`} onPress={() => setPrompt(idea)} style={({pressed}) => [s.chip, prompt === idea && s.chipActive, pressed && s.pressed]}><Text style={[s.chipText, prompt === idea && s.chipTextActive]}>{idea}</Text></Pressable>)}
       </ScrollView>
       <Pressable testID="barmejli-generate" accessibilityRole="button" disabled={!canGenerate} onPress={generate} style={({pressed}) => [s.primary, !canGenerate && s.disabled, pressed && s.pressed]}>
-        {busy === 'generate' ? <ActivityIndicator color={night.gold}/> : <><Text style={s.primaryText}>{plan ? 'Créer un nouveau programme' : 'Imaginer ma sortie'}</Text><View style={s.primaryArrow}><Icon name="arrow" color={night.ink} size={18} /></View></>}
+        {busy === 'generate' ? <ActivityIndicator color={night.gold}/> : <><Text style={s.primaryText}>{mode === 'single' ? (plan ? 'Trouver une autre adresse' : 'Trouver mon adresse') : plan ? 'Créer un nouveau programme' : 'Imaginer ma sortie'}</Text><View style={s.primaryArrow}><Icon name="arrow" color={night.ink} size={18} /></View></>}
       </Pressable>
     </View>
 
@@ -100,11 +111,11 @@ export default function BarmejliScreen({navigation, route}: any) {
       <View style={s.summary}>
         <View style={s.planHead}>
           <View style={s.grow}>
-            <Text style={s.eyebrowGold}>VOTRE ITINÉRAIRE</Text>
+            <Text style={s.eyebrowGold}>{plan.steps.length === 1 ? 'VOTRE ADRESSE' : 'VOTRE ITINÉRAIRE'}</Text>
             <Text style={s.planTitle}>{plan.request.city}</Text>
             <View style={s.tags}><Text style={s.tag}>{sentence(plan.request.mood)}</Text><Text style={s.tag}>{sentence(plan.request.groupType)}</Text></View>
           </View>
-          <View style={s.stepCount}><Text style={s.stepCountNumber}>{plan.steps.length}</Text><Text style={s.stepCountLabel}>ÉTAPES</Text></View>
+          <View style={s.stepCount}><Text style={s.stepCountNumber}>{plan.steps.length}</Text><Text style={s.stepCountLabel}>{plan.steps.length === 1 ? 'ÉTAPE' : 'ÉTAPES'}</Text></View>
         </View>
         <View style={s.totals}>
           <View style={s.metric}><Text style={s.metricLabel}>ESTIMATION</Text><Text style={s.totalStrong}>~{plan.totals.cost} DT</Text></View>
@@ -166,6 +177,7 @@ const s = StyleSheet.create({
   heroTitle:{fontFamily:fonts.display,fontSize:32,lineHeight:39,fontWeight:'700',letterSpacing:-.5,color:night.white,marginTop:12},heroAccent:{color:night.gold,fontStyle:'italic'},heroText:{fontSize:13,lineHeight:20,color:'#BDB2CE',marginTop:10,maxWidth:285},
   composer:{marginHorizontal:20,marginTop:-46,backgroundColor:night.white,borderRadius:28,padding:18,borderWidth:1,borderColor:night.line,elevation:8,shadowColor:'#1C1529',shadowOffset:{width:0,height:14},shadowOpacity:.12,shadowRadius:24},
   composerHead:{flexDirection:'row',alignItems:'center',gap:10},sparkBadge:{width:30,height:30,borderRadius:15,backgroundColor:night.gold,alignItems:'center',justifyContent:'center'},label:{fontSize:14,fontWeight:'800',color:night.text},counter:{fontSize:10,color:night.muted,fontVariant:['tabular-nums']},
+  modes:{flexDirection:'row',gap:4,marginTop:14,padding:4,borderRadius:18,backgroundColor:night.page,borderWidth:1,borderColor:night.line},mode:{flex:1,height:36,borderRadius:14,alignItems:'center',justifyContent:'center'},modeActive:{backgroundColor:night.ink},modeText:{fontSize:12,fontWeight:'800',color:night.muted},modeTextActive:{color:night.white},
   input:{height:92,minHeight:92,maxHeight:92,flexGrow:0,paddingHorizontal:0,paddingVertical:14,color:night.text,fontSize:15,lineHeight:23,textAlignVertical:'top'},
   chipsScroll:{marginHorizontal:-18,marginBottom:14},chips:{gap:8,paddingHorizontal:18},chip:{height:32,paddingHorizontal:12,borderRadius:16,borderWidth:1,borderColor:night.line,backgroundColor:night.page,justifyContent:'center'},chipActive:{backgroundColor:night.violetSoft,borderColor:night.violet},chipText:{fontSize:11,fontWeight:'700',color:night.muted},chipTextActive:{color:night.violet},
   primary:{minHeight:56,paddingLeft:20,paddingRight:8,borderRadius:28,backgroundColor:night.ink,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8},primaryText:{flexShrink:1,color:night.white,fontWeight:'800',fontSize:14},primaryArrow:{width:40,height:40,borderRadius:20,backgroundColor:night.gold,alignItems:'center',justifyContent:'center'},disabled:{opacity:.45},

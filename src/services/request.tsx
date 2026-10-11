@@ -57,6 +57,13 @@ const renewAccessToken = () => {
   return refreshPromise;
 };
 
+// `silentError: true` sur une requête : l'erreur est gérée par l'écran, pas de toast global.
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    silentError?: boolean;
+  }
+}
+
 const AxiosInterceptor = ({children}: PropsWithChildren) => {
   const toast = useToast();
   const [ready, setReady] = useState(false);
@@ -102,6 +109,7 @@ const AxiosInterceptor = ({children}: PropsWithChildren) => {
           : error?.response
             ? 'Une erreur est survenue. Vérifiez vos informations.'
             : 'Connexion au serveur impossible. Vérifiez Internet.');
+      if (originalRequest?.silentError) return Promise.reject(error);
       toast.show({
         placement: 'top',
         render: () => {

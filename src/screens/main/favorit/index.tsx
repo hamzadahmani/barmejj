@@ -182,7 +182,12 @@ export default function MyFavorit({navigation}: any) {
             <FavoriteCard
               item={item}
               deleting={deletingId === String(item.idPlace)}
-              onOpen={() => navigation.navigate('Details', {id: item.idPlace})}
+              onOpen={() =>
+                navigation.navigate('Details', {
+                  id: item.idPlace,
+                  source: 'favorites',
+                })
+              }
               onDelete={() => handleDelete(item.idPlace)}
             />
           )}

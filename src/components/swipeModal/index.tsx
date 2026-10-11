@@ -84,7 +84,7 @@ const CustomSwipeModal = forwardRef<CustomSwipeModalRef, CustomSwipeModalProps>(
             borderRadius={16}
             backgroundColor={Color.main}
             onPress={() =>
-              navigation.navigate('Details', {id: place?.idPlace ?? place?.id})
+              navigation.navigate('Details', {id: place?.idPlace ?? place?.id, source: 'map'})
             }>
             Voir l’établissement
           </Button>

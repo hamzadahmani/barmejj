@@ -1,3 +1,6 @@
 <resources>
-    <color name="barmej_splash_background">#21172F</color>
+    <!-- Fond du splash : même violet que l'icône et que le début de l'animation JS. -->
+    <color name="barmej_splash_background">#6A4BC4</color>
+    <!-- Barres système de l'application (inchangées). -->
+    <color name="barmej_system_bars">#21172F</color>
 </resources>

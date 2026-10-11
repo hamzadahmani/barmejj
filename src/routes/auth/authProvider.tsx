@@ -1,10 +1,12 @@
 import React, {
   createContext,
   PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from 'react';
+import {StyleSheet, View} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedSplash from '../../components/animatedSplash';
 import {
@@ -42,6 +44,8 @@ const AuthProvider = ({children}: PropsWithChildren) => {
   const [user, setUser] = useState<any>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [splashDone, setSplashDone] = useState(false);
+  const finishSplash = useCallback(() => setSplashDone(true), []);
 
   useEffect(() => {
     let active = true;
@@ -76,7 +80,7 @@ const AuthProvider = ({children}: PropsWithChildren) => {
         if (active) {
           const remaining = Math.max(0, 1650 - (Date.now() - startedAt));
           if (remaining) {
-            await new Promise(resolve => setTimeout(resolve, remaining));
+            await new Promise<void>(resolve => setTimeout(resolve, remaining));
           }
           clearTimeout(loadingTimeout);
           setIsLoading(false);
@@ -145,16 +149,23 @@ const AuthProvider = ({children}: PropsWithChildren) => {
     saveToStorage('userDetails', userData);
   };
 
-  if (isLoading) {
-    return <AnimatedSplash />;
-  }
-
+  // Le splash reste monté au même endroit pendant le chargement puis joue
+  // sa sortie au-dessus de l'application (pas de redémarrage de l'animation).
   return (
-    <AuthContext.Provider
-      value={{userInfo, user, login, updateUserInfo, logout}}>
-      {children}
-    </AuthContext.Provider>
+    <View style={splashStyles.root}>
+      {isLoading ? null : (
+        <AuthContext.Provider
+          value={{userInfo, user, login, updateUserInfo, logout}}>
+          {children}
+        </AuthContext.Provider>
+      )}
+      {splashDone ? null : (
+        <AnimatedSplash ready={!isLoading} onFinish={finishSplash} />
+      )}
+    </View>
   );
 };
 
 export default AuthProvider;
+
+const splashStyles = StyleSheet.create({root: {flex: 1}});

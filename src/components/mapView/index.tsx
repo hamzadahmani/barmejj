@@ -327,7 +327,10 @@ export default function MapScreen({navigation}: any) {
                       accessibilityRole="button"
                       accessibilityLabel={`Découvrir ${place.placeName}`}
                       onPress={() =>
-                        navigation.navigate('Details', {id: place.idPlace})
+                        navigation.navigate('Details', {
+                          id: place.idPlace,
+                          source: 'map',
+                        })
                       }
                       style={styles.openButton}>
                       <VectorIcon name="arrowRight" color="white" />
@@ -342,8 +345,8 @@ export default function MapScreen({navigation}: any) {
                       {Number(place.idCategory) === 2
                         ? 'Café'
                         : Number(place.idCategory) === 3
-                        ? 'Sortie'
-                        : 'Restaurant'}
+                          ? 'Sortie'
+                          : 'Restaurant'}
                     </Text>
                   </View>
                 </View>

@@ -1,7 +1,10 @@
 <resources>
+    <!-- Android 12+ : splash système avec le logo sans pastille, puis même fond pour un enchaînement sans saut. -->
     <style name="AppTheme.Starting" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">@color/barmej_splash_background</item>
+        <item name="android:navigationBarColor">@color/barmej_system_bars</item>
         <item name="android:windowSplashScreenBackground">@color/barmej_splash_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@color/barmej_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
     </style>
 </resources>

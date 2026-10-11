@@ -118,12 +118,21 @@ function VideoCard({
   const mountPlayer = active || preload;
   const paused = !active || !playbackAllowed || userPaused;
 
-  // Quand la carte quitte l'écran : on remet la lecture à zéro pour le retour.
+  // Quand la carte quitte l'écran : on note le temps regardé si la vidéo
+  // n'a pas été vue jusqu'au bout (statistiques Pro), puis on remet à zéro.
   useEffect(() => {
     if (!active) {
+      const watched = lastTimeRef.current;
+      if (watched >= 0.5 && !milestones.current.has(100)) {
+        const ms = Math.round(watched * 1000);
+        onTrack(item, 'VIDEO_SKIP', ms, ms);
+      }
+      lastTimeRef.current = 0;
       setUserPaused(false);
       setExpanded(false);
     }
+    // Uniquement au changement de carte active.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   useEffect(() => {

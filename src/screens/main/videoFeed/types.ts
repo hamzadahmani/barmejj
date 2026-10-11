@@ -33,6 +33,7 @@ export type FeedEventType =
   | 'VIDEO_50_PERCENT'
   | 'VIDEO_75_PERCENT'
   | 'VIDEO_COMPLETE'
+  | 'VIDEO_SKIP'
   | 'PLACE_OPEN';
 
 export type TrackFn = (

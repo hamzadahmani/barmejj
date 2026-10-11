@@ -9,10 +9,15 @@ export const getAllPlacesByCategorieAPI = async (params: any) => {
   return response.data;
 };
 
-export const getPlaceByIdAPI = async (params: any) => {
+/**
+ * Fiche d'un établissement. `source` (fil vidéo, recherche…) n'est passé que
+ * par l'écran de la fiche : c'est ce qui compte une vue dans les statistiques.
+ */
+export const getPlaceByIdAPI = async (params: any, source?: string) => {
   const [, {id}] = params.queryKey;
   const response = await axios.get<any>(`getPlaceInfoByIdPlace/${id}`, {
     signal: params.signal,
+    params: source ? {source} : undefined,
   });
   return response.data;
 };

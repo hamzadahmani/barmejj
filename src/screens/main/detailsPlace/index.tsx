@@ -23,8 +23,9 @@ import LoadingSpinner from '../../../components/Loader';
 import {getPlaceByIdAPI} from '../../../services/place';
 import {rememberPlace} from '../../../services/discovery';
 import {useAuth} from '../../../routes/auth/authProvider';
-import {isOpen} from '../../../helpers/functions';
+import {isOpen, openingHint} from '../../../helpers/functions';
 import MapPlaceLocation from './mapLocation';
+import PlaceMenuSection from '../../../components/placeMenu';
 import ReportModal from '../../../components/reportModal';
 import {useFavorite} from '../../../components/discovery/favoriteButton';
 import {fonts, night} from '../../../components/discovery/theme';
@@ -173,6 +174,7 @@ const DetailIcon = ({
 
 export default function PlaceDetails({navigation, route}: any) {
   const {id} = route.params;
+  const viewSource: string = route.params?.source ?? 'app';
   const {userInfo} = useAuth();
   // Favori réellement enregistré (avant : simple état local, perdu à la fermeture).
   const {saved: favorit, toggle: toggleFavorite} = useFavorite(Number(id));
@@ -219,7 +221,7 @@ export default function PlaceDetails({navigation, route}: any) {
     refetch: refetchPlace,
   } = useQuery({
     queryKey: [...queryKeys.getPlaceById, {id}],
-    queryFn: getPlaceByIdAPI,
+    queryFn: context => getPlaceByIdAPI(context, viewSource),
   });
   useEffect(() => {
     if (data?.place?.idPlace && userInfo?.idUser)
@@ -323,7 +325,7 @@ export default function PlaceDetails({navigation, route}: any) {
               setIsVisible(true);
             }}
             style={StyleSheet.absoluteFill}>
-            {images[0]?.uri ?? data?.place?.image ? (
+            {(images[0]?.uri ?? data?.place?.image) ? (
               <Image
                 source={{uri: images[0]?.uri ?? data?.place?.image}}
                 alt={data?.place?.placeName ?? 'Photo de l’établissement'}
@@ -407,7 +409,9 @@ export default function PlaceDetails({navigation, route}: any) {
                 <Text color="white" fontSize={10} fontWeight={800}>
                   {isOpen(data?.placeinfo?.horaire)
                     ? 'Ouvert maintenant'
-                    : 'Fermé actuellement'}
+                    : openingHint(data?.placeinfo?.horaire)
+                      ? `Fermé · ${openingHint(data?.placeinfo?.horaire)}`
+                      : 'Fermé actuellement'}
                 </Text>
               </Box>
               {data?.place?.verified ? (
@@ -551,7 +555,12 @@ export default function PlaceDetails({navigation, route}: any) {
               letterSpacing={1.4}>
               À PROPOS
             </Text>
-            <Text color={Color.text} fontSize={21} fontFamily={fonts.display} fontWeight={700} mt={2}>
+            <Text
+              color={Color.text}
+              fontSize={21}
+              fontFamily={fonts.display}
+              fontWeight={700}
+              mt={2}>
               L’expérience {data?.place?.placeName}
             </Text>
             <Text color={Color.muted} fontSize={13} lineHeight={21} mt={3}>
@@ -597,7 +606,12 @@ export default function PlaceDetails({navigation, route}: any) {
                   letterSpacing={1.3}>
                   FIDÉLITÉ {String(data?.place?.placeName || '').toUpperCase()}
                 </Text>
-                <Text color="white" fontSize={21} fontFamily={fonts.display} fontWeight={700} mt={2}>
+                <Text
+                  color="white"
+                  fontSize={21}
+                  fontFamily={fonts.display}
+                  fontWeight={700}
+                  mt={2}>
                   {loyaltyData.balance} points disponibles
                 </Text>
                 <Text color="#DDD5E9" fontSize={11} lineHeight={17} mt={1}>
@@ -634,7 +648,11 @@ export default function PlaceDetails({navigation, route}: any) {
                     numberOfLines={2}>
                     {reward.name}
                   </Text>
-                  <Text color={night.gold} fontSize={10} fontWeight={900} mt={2}>
+                  <Text
+                    color={night.gold}
+                    fontSize={10}
+                    fontWeight={900}
+                    mt={2}>
                     {reward.pointsCost} POINTS
                   </Text>
                 </Box>
@@ -649,7 +667,11 @@ export default function PlaceDetails({navigation, route}: any) {
               justifyContent="space-between"
               alignItems="center"
               mb={3}>
-              <Text color={Color.text} fontSize={17} fontFamily={fonts.display} fontWeight={700}>
+              <Text
+                color={Color.text}
+                fontSize={17}
+                fontFamily={fonts.display}
+                fontWeight={700}>
                 Galerie
               </Text>
               <Text color={Color.muted} fontSize={12}>
@@ -686,7 +708,11 @@ export default function PlaceDetails({navigation, route}: any) {
               alignItems="center"
               mb={3}>
               <Box>
-                <Text color={Color.text} fontSize={20} fontFamily={fonts.display} fontWeight={700}>
+                <Text
+                  color={Color.text}
+                  fontSize={20}
+                  fontFamily={fonts.display}
+                  fontWeight={700}>
                   Découvrez l’ambiance
                 </Text>
                 <Text color={Color.muted} fontSize={12} mt={1}>
@@ -745,7 +771,11 @@ export default function PlaceDetails({navigation, route}: any) {
           </Box>
         )}
         <Box mt={5} mb={2}>
-          <Text color={Color.text} fontSize={22} fontFamily={fonts.display} fontWeight={700}>
+          <Text
+            color={Color.text}
+            fontSize={22}
+            fontFamily={fonts.display}
+            fontWeight={700}>
             Coordonnées
           </Text>
           <Text color={Color.muted} fontSize={11} mt={1}>
@@ -843,7 +873,11 @@ export default function PlaceDetails({navigation, route}: any) {
         </Box>
         {data?.placeinfo?.placeOutfit || data?.placeinfo?.placeMusicStyle ? (
           <Box mt={5}>
-            <Text color={Color.text} fontSize={22} fontFamily={fonts.display} fontWeight={700}>
+            <Text
+              color={Color.text}
+              fontSize={22}
+              fontFamily={fonts.display}
+              fontWeight={700}>
               Informations pratiques
             </Text>
             <Text color={Color.muted} fontSize={11} mt={1}>
@@ -950,6 +984,8 @@ export default function PlaceDetails({navigation, route}: any) {
           </Box>
         ) : null}
 
+        <PlaceMenuSection menus={data?.menus} />
+
         {(data?.events ?? []).length > 0 && (
           <Box mt={5}>
             <Flex
@@ -958,7 +994,11 @@ export default function PlaceDetails({navigation, route}: any) {
               alignItems="center"
               mb={3}>
               <Box>
-                <Text color={Color.text} fontSize={22} fontFamily={fonts.display} fontWeight={700}>
+                <Text
+                  color={Color.text}
+                  fontSize={22}
+                  fontFamily={fonts.display}
+                  fontWeight={700}>
                   Événements
                 </Text>
                 <Text color={Color.muted} fontSize={12} mt={1}>
@@ -1149,7 +1189,11 @@ export default function PlaceDetails({navigation, route}: any) {
               justifyContent="space-between"
               alignItems="center">
               <Box>
-                <Text color={Color.text} fontSize={20} fontFamily={fonts.display} fontWeight={700}>
+                <Text
+                  color={Color.text}
+                  fontSize={20}
+                  fontFamily={fonts.display}
+                  fontWeight={700}>
                   Avis vérifiés
                 </Text>
                 <Text color={Color.muted} fontSize={11} mt={1}>
@@ -1311,8 +1355,8 @@ export default function PlaceDetails({navigation, route}: any) {
             {isStay
               ? 'Maison d’hôtes · séjour à la nuit'
               : data?.place?.averagePrice
-              ? `≈ ${data.place.averagePrice} DT / pers.`
-              : 'Prêt pour votre sortie ?'}
+                ? `≈ ${data.place.averagePrice} DT / pers.`
+                : 'Prêt pour votre sortie ?'}
           </Text>
           <Text
             color="white"
@@ -1326,7 +1370,9 @@ export default function PlaceDetails({navigation, route}: any) {
         </Box>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={isStay ? 'Demander un séjour' : 'Réserver une table'}
+          accessibilityLabel={
+            isStay ? 'Demander un séjour' : 'Réserver une table'
+          }
           onPress={primaryAction}
           style={glass.cta}
           _pressed={{opacity: 0.85}}>
@@ -1420,7 +1466,7 @@ const videoStyles = StyleSheet.create({
 });
 
 const layoutStyles = {
-style1: {paddingBottom: 270},
-style2: {width: 42, height: 42, flexShrink: 0},
-style3: {width: 34, height: 34, flexShrink: 0}
+  style1: {paddingBottom: 270},
+  style2: {width: 42, height: 42, flexShrink: 0},
+  style3: {width: 34, height: 34, flexShrink: 0},
 } as const;

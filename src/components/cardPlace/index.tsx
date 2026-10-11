@@ -70,7 +70,9 @@ export default function CardItem({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Découvrir ${placeName}`}
-      onPress={() => navigation.navigate('Details', {id, distance})}
+      onPress={() =>
+        navigation.navigate('Details', {id, distance, source: 'list'})
+      }
       style={({pressed}) => [s.card, pressed && s.pressed]}>
       <View style={s.visual}>
         {imgUrl ? (
@@ -82,20 +84,20 @@ export default function CardItem({
         )}
         <View style={s.scrim} />
         <View style={s.topRow}>
-          <View style={s.badge}>
-            <VectorIcon
-              name={featured ? 'sparkles' : 'star'}
-              size={13}
-              color="#F6B65C"
-            />
-            <Text style={s.badgeText}>
-              {featured
-                ? 'SÉLECTION BARMEJ'
-                : verified
-                ? 'VÉRIFIÉ'
-                : 'À DÉCOUVRIR'}
-            </Text>
-          </View>
+          {featured || verified ? (
+            <View style={s.badge}>
+              <VectorIcon
+                name={featured ? 'sparkles' : 'check'}
+                size={13}
+                color="#F6B65C"
+              />
+              <Text style={s.badgeText}>
+                {featured ? 'SÉLECTION BARMEJ' : 'VÉRIFIÉ'}
+              </Text>
+            </View>
+          ) : (
+            <View />
+          )}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
@@ -198,7 +200,7 @@ const s = StyleSheet.create({
     elevation: 3,
   },
   pressed: {opacity: 0.94, transform: [{scale: 0.992}]},
-  visual: {height: 215, backgroundColor: '#EAE5ED'},
+  visual: {height: 190, backgroundColor: '#EAE5ED'},
   image: {width: '100%', height: '100%'},
   fallback: {alignItems: 'center', justifyContent: 'center'},
   scrim: {
@@ -228,9 +230,9 @@ const s = StyleSheet.create({
     gap: 6,
   },
   badgeText: {
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: '900',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     color: '#FFFFFF',
   },
   favorite: {
@@ -253,7 +255,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  distanceText: {fontSize: 8, fontWeight: '900', color: '#FFFFFF'},
+  distanceText: {fontSize: 11, fontWeight: '900', color: '#FFFFFF'},
   body: {padding: 16},
   titleRow: {flexDirection: 'row', alignItems: 'flex-start'},
   grow: {flex: 1, paddingRight: 10},
@@ -263,7 +265,7 @@ const s = StyleSheet.create({
     letterSpacing: -0.4,
     color: '#21182E',
   },
-  subtitle: {fontSize: 10, color: '#85808B', marginTop: 3},
+  subtitle: {fontSize: 13, color: '#85808B', marginTop: 3},
   rating: {
     height: 32,
     borderRadius: 12,
@@ -273,7 +275,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  ratingText: {fontSize: 10, fontWeight: '900', color: '#8A5A16'},
+  ratingText: {fontSize: 13, fontWeight: '900', color: '#8A5A16'},
   metaRow: {flexDirection: 'row', alignItems: 'center', marginTop: 13},
   status: {
     height: 25,
@@ -285,14 +287,14 @@ const s = StyleSheet.create({
   },
   statusOpen: {backgroundColor: '#E5F6EC'},
   statusClosed: {backgroundColor: '#FDE8E8'},
-  statusDot: {width: 5, height: 5, borderRadius: 3},
+  statusDot: {width: 6, height: 6, borderRadius: 3},
   dotOpen: {backgroundColor: '#258B57'},
   dotClosed: {backgroundColor: '#CC4B4B'},
-  statusText: {fontSize: 8, fontWeight: '900'},
+  statusText: {fontSize: 11, fontWeight: '900'},
   textOpen: {color: '#23784E'},
   textClosed: {color: '#B33D3D'},
-  hours: {fontSize: 9, color: '#7D7683', marginLeft: 8, maxWidth: 105},
-  price: {fontSize: 8, fontWeight: '800', color: '#685887', marginLeft: 4},
+  hours: {flexShrink: 1, fontSize: 12, color: '#7D7683', marginLeft: 8},
+  price: {fontSize: 12, fontWeight: '800', color: '#685887', marginLeft: 4},
   divider: {height: 1, backgroundColor: '#F0ECF2', marginVertical: 14},
   bottom: {flexDirection: 'row', alignItems: 'center'},
   location: {
@@ -302,7 +304,7 @@ const s = StyleSheet.create({
     gap: 5,
     marginRight: 9,
   },
-  locationText: {flex: 1, fontSize: 9, color: '#766D7D'},
+  locationText: {flex: 1, fontSize: 12, color: '#766D7D'},
   reserve: {
     height: 44,
     borderRadius: 15,
@@ -314,5 +316,5 @@ const s = StyleSheet.create({
     gap: 7,
   },
   reservePressed: {opacity: 0.76},
-  reserveText: {fontSize: 10, fontWeight: '900', color: '#FFFFFF'},
+  reserveText: {fontSize: 13, fontWeight: '900', color: '#FFFFFF'},
 });

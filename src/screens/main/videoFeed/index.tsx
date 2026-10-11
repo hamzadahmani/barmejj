@@ -128,7 +128,7 @@ export default function VideoFeedScreen({navigation}: any) {
   const onOpen = useCallback(
     (item: FeedItem) => {
       track(item, 'PLACE_OPEN');
-      navigation.navigate('Details', {id: item.place.idPlace});
+      navigation.navigate('Details', {id: item.place.idPlace, source: 'video'});
     },
     [navigation, track],
   );

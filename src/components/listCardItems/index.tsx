@@ -7,7 +7,6 @@ import {useQuery} from '@tanstack/react-query';
 import React, {useMemo, useState} from 'react';
 import {
   FlatList,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -22,6 +21,7 @@ import CardItem from '../cardPlace';
 import LoadingSpinner from '../Loader';
 import SearchBar from '../search';
 import VectorIcon from '../vectorIcon';
+import {fonts, night} from '../discovery/theme';
 
 const categoryTitles: Record<number, string> = {
   1: 'Restaurants',
@@ -34,6 +34,16 @@ const intentFilters: Record<string, any> = {
   'Petit budget': {query: '', maxPrice: 40, sort: 'price'},
   'Avec des amis': {query: '', ambience: 'Festif', sort: 'relevance'},
   'Sortie calme': {query: '', ambience: 'Calme', sort: 'relevance'},
+};
+const intentIcons: Record<
+  string,
+  'moon' | 'heart' | 'wallet' | 'users' | 'coffee'
+> = {
+  'Ce soir': 'moon',
+  'En amoureux': 'heart',
+  'Petit budget': 'wallet',
+  'Avec des amis': 'users',
+  'Sortie calme': 'coffee',
 };
 const intentCopy: Record<string, string> = {
   'Ce soir': 'Des adresses disponibles pour votre soirée',
@@ -64,13 +74,13 @@ export default function ListCardItems({
     queryKey: interest
       ? [...queryKeys.placesByInterest, {interest}]
       : filters
-      ? [...queryKeys.getPlacesBySearch, filters]
-      : [...queryKeys.getAllPlacesByCategorie, {id: idCategory}],
+        ? [...queryKeys.getPlacesBySearch, filters]
+        : [...queryKeys.getAllPlacesByCategorie, {id: idCategory}],
     queryFn: interest
       ? getPlacesByInterest
       : filters
-      ? getPlacesBySearch
-      : getAllPlacesByCategorieAPI,
+        ? getPlacesBySearch
+        : getAllPlacesByCategorieAPI,
   });
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -121,9 +131,15 @@ export default function ListCardItems({
     return rows;
   }, [data, latitude, longitude, selectedFilter]);
 
-  const cover =
-    visiblePlaces[0]?.image ||
-    (Array.isArray(data) ? data[0]?.image : undefined);
+  const allRows = Array.isArray(data) ? data : [];
+  const openCount = allRows.filter((item: any) => isOpen(item.horaire)).length;
+  const heroIcon = intentIcons[intent] ?? (interest ? 'sparkles' : 'mapPin');
+  const filterItems = [
+    {key: 'Tous', icon: 'sparkles', count: allRows.length},
+    {key: 'Ouverts', icon: 'clock', count: openCount},
+    {key: 'À proximité', icon: 'mapPin'},
+    {key: 'Mieux notés', icon: 'star'},
+  ] as const;
   return (
     <View style={s.screen}>
       <LoadingSpinner visible={isLoading} />
@@ -137,8 +153,8 @@ export default function ListCardItems({
             onRefresh={() => {
               refetch();
             }}
-            colors={['#33264D']}
-            tintColor="#33264D"
+            colors={[night.plum]}
+            tintColor={night.plum}
           />
         }
         contentContainerStyle={[
@@ -146,7 +162,7 @@ export default function ListCardItems({
           !visiblePlaces.length && s.emptyContent,
         ]}
         ItemSeparatorComponent={Separator}
-        renderItem={({item, index}: any) => (
+        renderItem={({item}: any) => (
           <CardItem
             {...item}
             id={item.idPlace}
@@ -157,101 +173,110 @@ export default function ListCardItems({
                 ? haversine(item.latitude, item.longitude, latitude, longitude)
                 : null
             }
-            featured={index < 2}
           />
         )}
         ListHeaderComponent={
           <>
             <View style={s.hero}>
-              {cover ? (
-                <Image source={{uri: cover}} style={StyleSheet.absoluteFill} />
-              ) : null}
-              <View style={s.heroOverlay} />
-              <View style={s.heroGlow} />
-              <Pressable
-                accessibilityLabel="Retour"
-                onPress={() => navigation.goBack()}
-                style={s.back}>
-                <VectorIcon name="arrowRight" size={20} color="#FFFFFF" />
-                <View style={s.flip} />
-              </Pressable>
-              <View style={s.heroCopy}>
-                <Text style={s.eyebrow}>
-                  {intent ? 'SÉLECTION SELON VOTRE ENVIE' : 'DÉCOUVRIR À TUNIS'}
-                </Text>
-                <Text style={s.title}>{title}</Text>
-                <Text style={s.subtitle}>
-                  {intentCopy[intent] ||
-                    'Des adresses sélectionnées pour une expérience réussie'}
-                </Text>
-                <View style={s.heroMeta}>
-                  <Text style={s.heroMetaText}>
-                    {visiblePlaces.length} ADRESSES
+              <View style={s.blobViolet} />
+              <View style={s.blobGold} />
+              <View style={s.heroTop}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Retour"
+                  hitSlop={8}
+                  onPress={() => navigation.goBack()}
+                  style={({pressed}) => [s.back, pressed && s.pressed]}>
+                  <View style={s.flipIcon}>
+                    <VectorIcon name="arrowRight" size={20} color="#FFFFFF" />
+                  </View>
+                </Pressable>
+                <View style={s.heroBadge}>
+                  <VectorIcon name={heroIcon} size={22} color={night.gold} />
+                </View>
+              </View>
+              <Text style={s.eyebrow}>
+                {intent ? 'SÉLECTION SELON VOTRE ENVIE' : 'DÉCOUVRIR À TUNIS'}
+              </Text>
+              <Text style={s.title}>{title}</Text>
+              <Text style={s.subtitle}>
+                {intentCopy[intent] ||
+                  'Des adresses sélectionnées pour une sortie réussie'}
+              </Text>
+              <View style={s.stats}>
+                <View style={s.stat}>
+                  <Text style={s.statValue}>{allRows.length}</Text>
+                  <Text style={s.statLabel}>
+                    adresse{allRows.length > 1 ? 's' : ''}
                   </Text>
-                  <View style={s.dot} />
-                  <Text style={s.heroMetaText}>RÉSERVATION RAPIDE</Text>
+                </View>
+                <View style={s.statDivider} />
+                <View style={s.stat}>
+                  <View style={s.liveDot} />
+                  <Text style={s.statValue}>{openCount}</Text>
+                  <Text style={s.statLabel}>
+                    ouverte{openCount > 1 ? 's' : ''} maintenant
+                  </Text>
                 </View>
               </View>
             </View>
             <View style={s.searchCard}>
               <SearchBar navigation={navigation} />
             </View>
-            <View style={s.filterHeader}>
-              <View>
-                <Text style={s.resultsTitle}>À découvrir</Text>
-                <Text style={s.resultsText}>
-                  Affinez la sélection selon votre moment
-                </Text>
-              </View>
-              <View style={s.count}>
-                <Text style={s.countText}>{visiblePlaces.length}</Text>
-              </View>
-            </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={s.filters}>
-              {['Tous', 'Ouverts', 'À proximité', 'Mieux notés'].map(
-                (filter, index) => {
-                  const active = selectedFilter === filter;
-                  const icons = [
-                    'sparkles',
-                    'clock',
-                    'mapPin',
-                    'star',
-                  ] as const;
-                  return (
-                    <Pressable
-                      key={filter}
-                      testID={`filter-${filter}`}
-                      accessibilityRole="button"
-                      accessibilityState={{
-                        selected: active,
-                        disabled: locating,
-                      }}
-                      disabled={locating}
-                      onPress={() => {
-                        selectFilter(filter);
-                      }}
-                      style={({pressed}) => [
-                        s.filter,
-                        active && s.filterActive,
-                        pressed && s.pressed,
-                      ]}>
-                      <VectorIcon
-                        name={icons[index]}
-                        size={15}
-                        color={active ? '#FFFFFF' : '#685887'}
-                      />
-                      <Text
-                        style={[s.filterText, active && s.filterTextActive]}>
-                        {filter}
-                      </Text>
-                    </Pressable>
-                  );
-                },
-              )}
+              {filterItems.map(filter => {
+                const active = selectedFilter === filter.key;
+                return (
+                  <Pressable
+                    key={filter.key}
+                    testID={`filter-${filter.key}`}
+                    accessibilityRole="button"
+                    accessibilityState={{selected: active, disabled: locating}}
+                    disabled={locating}
+                    onPress={() => {
+                      selectFilter(filter.key);
+                    }}
+                    style={({pressed}) => [
+                      s.filter,
+                      active && s.filterActive,
+                      pressed && s.pressed,
+                    ]}>
+                    <VectorIcon
+                      name={filter.icon}
+                      size={15}
+                      color={active ? '#FFFFFF' : night.violet}
+                    />
+                    <Text style={[s.filterText, active && s.filterTextActive]}>
+                      {filter.key}
+                    </Text>
+                    {'count' in filter ? (
+                      <View
+                        style={[s.filterCount, active && s.filterCountActive]}>
+                        <Text
+                          style={[
+                            s.filterCountText,
+                            active && s.filterTextActive,
+                          ]}>
+                          {filter.count}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
             </ScrollView>
+            <Text style={s.resultsText}>
+              {selectedFilter === 'À proximité'
+                ? 'Triées de la plus proche à la plus éloignée'
+                : selectedFilter === 'Mieux notés'
+                  ? 'Triées par note des clients'
+                  : selectedFilter === 'Ouverts'
+                    ? `${visiblePlaces.length} adresse${visiblePlaces.length > 1 ? 's' : ''} ouverte${visiblePlaces.length > 1 ? 's' : ''} en ce moment`
+                    : `${visiblePlaces.length} adresse${visiblePlaces.length > 1 ? 's' : ''} à découvrir`}
+            </Text>
             {locating ? <Notice loading message="Localisation…" /> : null}
             {locationError ? (
               <Notice
@@ -275,11 +300,13 @@ export default function ListCardItems({
           !isLoading && !isError ? (
             <View style={s.empty}>
               <View style={s.emptyIcon}>
-                <VectorIcon name="sparkles" size={30} color="#33264D" />
+                <VectorIcon name="sparkles" size={30} color={night.plum} />
               </View>
               <Text style={s.emptyTitle}>Aucune adresse trouvée</Text>
               <Text style={s.emptyText}>
-                Essayez un autre filtre ou lancez une recherche plus large.
+                {selectedFilter === 'Ouverts'
+                  ? 'Rien n’est ouvert en ce moment. Revenez plus tard ou voyez toutes les adresses.'
+                  : 'Essayez un autre filtre ou lancez une recherche plus large.'}
               </Text>
               <Pressable
                 onPress={() => setSelectedFilter('Tous')}
@@ -299,164 +326,188 @@ function Separator() {
 }
 
 const s = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: '#F7F5F9'},
+  screen: {flex: 1, backgroundColor: night.page},
   content: {paddingBottom: 125},
   emptyContent: {flexGrow: 1},
-  separator: {height: 14},
+  separator: {height: 16},
   hero: {
-    height: 245,
-    marginHorizontal: 13,
+    marginHorizontal: 14,
     marginTop: 10,
     borderRadius: 30,
     overflow: 'hidden',
+    backgroundColor: night.deep,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 48,
+  },
+  blobViolet: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(114,81,201,.35)',
+    right: -90,
+    top: -110,
+  },
+  blobGold: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(246,182,92,.12)',
+    left: -70,
+    bottom: -90,
+  },
+  heroTop: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  heroImage: {borderRadius: 30},
-  heroOverlay: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: 'rgba(25,17,38,.62)',
-  },
-  heroGlow: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: 'rgba(244,180,94,.16)',
-    right: -80,
-    top: -90,
+    alignItems: 'center',
+    marginBottom: 22,
   },
   back: {
-    width: 45,
-    height: 45,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,.14)',
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.2)',
-    margin: 16,
+    borderColor: 'rgba(255,255,255,.18)',
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{rotate: '180deg'}],
   },
-  flip: {display: 'none'},
-  heroCopy: {paddingHorizontal: 19, paddingBottom: 21},
+  flipIcon: {transform: [{rotate: '180deg'}]},
+  heroBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 17,
+    backgroundColor: 'rgba(246,182,92,.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(246,182,92,.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   eyebrow: {
-    fontSize: 8,
+    fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 1.5,
-    color: '#F6B65C',
+    letterSpacing: 1.6,
+    color: night.gold,
   },
   title: {
+    fontFamily: fonts.display,
     fontSize: 34,
-    lineHeight: 39,
-    fontWeight: '900',
-    letterSpacing: -1,
+    lineHeight: 40,
+    fontWeight: '700',
+    letterSpacing: -0.5,
     color: '#FFFFFF',
-    marginTop: 5,
+    marginTop: 6,
   },
-  subtitle: {
-    fontSize: 11,
-    lineHeight: 17,
-    color: '#DDD6E4',
-    marginTop: 5,
-    maxWidth: 315,
-  },
-  heroMeta: {flexDirection: 'row', alignItems: 'center', marginTop: 14},
-  heroMetaText: {
-    fontSize: 7,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-    color: '#FFFFFF',
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#F6B65C',
-    marginHorizontal: 9,
-  },
-  searchCard: {marginHorizontal: 17, marginTop: -1, zIndex: 20},
-  filterHeader: {
-    paddingHorizontal: 18,
-    marginTop: 22,
+  subtitle: {fontSize: 14, lineHeight: 20, color: '#D9D1E6', marginTop: 6},
+  stats: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    alignSelf: 'flex-start',
+    marginTop: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,.12)',
   },
-  resultsTitle: {
-    fontSize: 23,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    color: '#21182E',
+  stat: {flexDirection: 'row', alignItems: 'center', gap: 5},
+  statValue: {fontSize: 15, fontWeight: '900', color: '#FFFFFF'},
+  statLabel: {fontSize: 12, color: '#D9D1E6', fontWeight: '600'},
+  statDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: 'rgba(255,255,255,.2)',
+    marginHorizontal: 12,
   },
-  resultsText: {fontSize: 9, color: '#8B8491', marginTop: 3},
-  count: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    backgroundColor: '#EEE8F5',
-    alignItems: 'center',
-    justifyContent: 'center',
+  liveDot: {width: 7, height: 7, borderRadius: 4, backgroundColor: '#4ADE80'},
+  searchCard: {
+    marginHorizontal: 26,
+    marginTop: -28,
+    zIndex: 20,
+    borderRadius: 22,
+    shadowColor: '#24182F',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: {width: 0, height: 8},
+    elevation: 6,
   },
-  countText: {fontSize: 13, fontWeight: '900', color: '#33264D'},
-  filters: {paddingHorizontal: 18, paddingVertical: 14, gap: 8},
+  filters: {paddingHorizontal: 18, paddingTop: 18, paddingBottom: 6, gap: 8},
   filter: {
     height: 40,
-    borderRadius: 15,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E7E0EB',
-    paddingHorizontal: 12,
+    borderColor: night.line,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
   },
-  filterActive: {backgroundColor: '#33264D', borderColor: '#33264D'},
-  filterText: {fontSize: 10, fontWeight: '800', color: '#514A59'},
+  filterActive: {backgroundColor: night.plum, borderColor: night.plum},
+  filterText: {fontSize: 13, fontWeight: '700', color: night.text},
   filterTextActive: {color: '#FFFFFF'},
+  filterCount: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    paddingHorizontal: 6,
+    backgroundColor: night.violetSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterCountActive: {backgroundColor: 'rgba(255,255,255,.18)'},
+  filterCountText: {fontSize: 11, fontWeight: '900', color: night.violet},
+  resultsText: {
+    fontSize: 13,
+    color: night.muted,
+    fontWeight: '600',
+    paddingHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 14,
+  },
   pressed: {opacity: 0.7, transform: [{scale: 0.98}]},
   empty: {
     marginHorizontal: 18,
-    marginTop: 20,
+    marginTop: 8,
     backgroundColor: '#FFFFFF',
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#E8E2EB',
-    padding: 30,
+    borderColor: night.line,
+    padding: 28,
     alignItems: 'center',
   },
   emptyIcon: {
     width: 62,
     height: 62,
     borderRadius: 21,
-    backgroundColor: '#F0EAF7',
+    backgroundColor: night.violetSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#21182E',
+    color: night.text,
     marginTop: 15,
   },
   emptyText: {
-    fontSize: 11,
-    lineHeight: 17,
-    color: '#817A87',
+    fontSize: 14,
+    lineHeight: 20,
+    color: night.muted,
     textAlign: 'center',
     marginTop: 6,
   },
   reset: {
-    height: 44,
-    borderRadius: 15,
-    backgroundColor: '#33264D',
-    paddingHorizontal: 18,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: night.plum,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 17,
+    marginTop: 18,
   },
-  resetText: {fontSize: 11, fontWeight: '900', color: '#FFFFFF'},
+  resetText: {fontSize: 14, fontWeight: '800', color: '#FFFFFF'},
 });

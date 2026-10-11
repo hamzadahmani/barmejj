@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash natif (Android 7 à 11, et fond de fenêtre après le splash système d'Android 12+). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/barmej_splash_background"/>
+    <item android:width="80.36dp" android:height="150dp" android:gravity="center" android:drawable="@drawable/splash_logo"/>
+</layer-list>

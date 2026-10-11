@@ -1,7 +1,6 @@
 // Keep resource prefixes stable: mutations invalidate every parameter variant.
 export const queryKeys = {
   adminReservations: ['adminReservations'] as const,
-  assistantSuggestions: ['assistantSuggestions'] as const,
   discovery: ['discovery'] as const,
   favorites: ['favorites'] as const,
   featuredPlaces: ['featuredPlaces'] as const,

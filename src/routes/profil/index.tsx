@@ -9,7 +9,7 @@ import PolicyScreen from '../../screens/policy/policy';
 import VerifiedReviewsScreen from '../../screens/main/community/reviews';
 import WaitlistScreen from '../../screens/main/community/waitlist';
 import GroupPlannerScreen from '../../screens/main/community/groupPlanner';
-import SmartAssistantScreen from '../../screens/main/community/assistant';
+import BarmejliScreen from '../../screens/main/experience/barmejli';
 import DetailsPlace from '../../screens/main/detailsPlace';
 import StayBooking from '../../screens/main/stay';
 import PersonalizationScreen from '../../screens/main/profil/personalization';
@@ -80,7 +80,8 @@ export default function StackProfil() {
       <Stack.Screen name="VerifiedReviews" component={VerifiedReviewsScreen} options={{headerShown: false}} />
       <Stack.Screen name="Waitlist" component={WaitlistScreen} options={{headerShown: false}} />
       <Stack.Screen name="GroupPlanner" component={GroupPlannerScreen} options={{headerShown: false}} />
-      <Stack.Screen name="SmartAssistant" component={SmartAssistantScreen} options={{headerShown: false}} />
+      {/* L’ancien « Assistant Barmej » est fusionné dans Barmejli (mode « Juste une adresse »). */}
+      <Stack.Screen name="SmartAssistant" component={BarmejliScreen} initialParams={{mode: 'single'}} options={{headerShown: false}} />
       <Stack.Screen name="Details" component={DetailsPlace} options={{headerShown: false}} />
       <Stack.Screen name="StayBooking" component={StayBooking} options={{headerShown: false}} />
       <Stack.Screen name="Personalization" component={PersonalizationScreen} options={{headerShown: false}} />

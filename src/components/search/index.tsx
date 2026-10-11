@@ -72,7 +72,7 @@ export default function SearchBar({navigation, appearance = 'light'}: any) {
     Keyboard.dismiss();
     setFocused(false);
     setQuery('');
-    navigation.navigate('Details', {id: idPlace});
+    navigation.navigate('Details', {id: idPlace, source: 'search'});
   };
 
   return (

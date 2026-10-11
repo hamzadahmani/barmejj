@@ -83,7 +83,8 @@ export default function ExploreHome({navigation}: any) {
       refreshProfile();
     }, [refreshDiscovery, refreshBooking, refreshProfile]),
   );
-  const openPlace = (id: number) => navigation.navigate('Details', {id});
+  const openPlace = (id: number) =>
+    navigation.navigate('Details', {id, source: 'list'});
   const openTab = (name: string, params?: object) =>
     navigation.getParent()?.navigate(name, params);
   const locate = async () => {

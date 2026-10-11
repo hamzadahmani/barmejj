@@ -13,7 +13,3 @@ export const createGroupPlanAPI = async (data: any) => (await axios.post('group-
 export const voteGroupOptionAPI = async (id: number) => axios.post(`group-options/${id}/vote`);
 export const finalizeGroupPlanAPI = async (id: number) => (await axios.post(`group-plans/${id}/finalize`)).data;
 
-export const getAssistantSuggestionsAPI = async ({queryKey}: any) => {
-  const [, params] = queryKey;
-  return (await axios.get('assistant/suggestions', {params})).data;
-};
