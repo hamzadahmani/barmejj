@@ -100,6 +100,15 @@ const AxiosInterceptor = ({children}: PropsWithChildren) => {
           error = refreshError;
         }
       }
+      // Compte suspendu par l'équipe Barmej : on ferme la session et on affiche le motif du serveur.
+      if (
+        error?.response?.status === 403 &&
+        error?.response?.data?.code === 'ACCOUNT_SUSPENDED' &&
+        !isAuthentication
+      ) {
+        await AsyncStorage.removeMany(['token', 'refreshToken', 'userDetails']);
+        expireSession();
+      }
       const message =
         (error?.response?.status === 401
           ? 'Votre session a expiré. Reconnectez-vous.'
