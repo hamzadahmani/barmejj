@@ -48,9 +48,15 @@ jobs:
 
       - name: Configure Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Install Android NDK
-        run: sdkmanager "ndk;27.1.12297006"
+        with:
+          # Le paquet « tools » par défaut n'existe plus dans les cmdline-tools
+          # récents (sdkmanager échoue) : on liste nous-mêmes ce dont le build a besoin
+          # (versions alignées sur android/build.gradle).
+          packages: >-
+            platform-tools
+            platforms;android-37
+            build-tools;37.0.0
+            ndk;27.1.12297006
 
       - name: Install JavaScript dependencies
         # React Query 4 fonctionne dans l'application mais sa déclaration de
