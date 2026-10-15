@@ -17,6 +17,10 @@ on:
       - "metro.config.js"
       - ".github/workflows/android-release.yml"
 
+# Nécessaire pour créer la Release GitHub qui contient l'APK.
+permissions:
+  contents: write
+
 concurrency:
   group: android-release-${{ github.ref }}
   cancel-in-progress: true
@@ -82,3 +86,20 @@ jobs:
           path: Barmej-release.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish APK as a public GitHub Release
+        # Une Release par build (tag apk-<numéro>), marquée « latest » :
+        # lien stable vers le dernier APK (dépôt public) :
+        # https://github.com/hamzadahmani/barmejj/releases/latest/download/Barmej.apk
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          cp Barmej-release.apk Barmej.apk
+          gh release create "apk-${{ github.run_number }}" Barmej.apk \
+            --repo "${{ github.repository }}" \
+            --title "Barmej APK #${{ github.run_number }}" \
+            --notes "Build automatique du commit ${{ github.sha }}." \
+            --target "${{ github.sha }}" \
+            --latest
+          echo "Lien public : https://github.com/${{ github.repository }}/releases/latest/download/Barmej.apk" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
