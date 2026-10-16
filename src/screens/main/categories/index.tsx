@@ -130,7 +130,10 @@ export default function ExploreHome({navigation}: any) {
       label: 'Barmejli',
       caption: 'Planifier ma sortie',
       tint: {bg: 'rgba(246,182,92,0.16)', fg: night.gold},
-      onPress: () => openTab('Expérience Barmej', {screen: 'Barmejli'}),
+      // initial: false garde l'accueil Expérience sous Barmejli : le bouton
+      // Retour y ramène au lieu de quitter l'onglet.
+      onPress: () =>
+        openTab('Expérience Barmej', {screen: 'Barmejli', initial: false}),
       a11y: 'Planifier une sortie avec Barmejli',
     },
     {

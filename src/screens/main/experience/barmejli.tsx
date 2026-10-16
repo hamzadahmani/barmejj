@@ -8,7 +8,7 @@ type Plan = {
   id: number;
   status: 'DRAFT' | 'SAVED';
   request: {city: string; budget: number; mood: string; groupType: string};
-  weather: {summary: string; temperatureC: number; precipitationProbability: number; adverse: boolean};
+  weather: {summary: string; temperatureC: number; precipitationProbability: number; adverse: boolean; unavailable?: boolean};
   totals: {cost: number; durationMin: number; distanceKm: number};
   explanation?: {summary: string; assumptions: string[]; travelNote: string};
   steps: Array<{id: number; position: number; placeName: string; title: string; startsAt: string; endsAt: string; estimatedCost: number; travelMinutes: number; travelDistanceKm: number; travelMode: string; address?: string; reason?: string; menuSelection?: {items: Array<{name: string; priceMillimes: number; quantity: number}>; totalMillimes: number; validatedAt: string} | null}>;
@@ -50,9 +50,12 @@ export default function BarmejliScreen({navigation, route}: any) {
   const generate = () => action('generate', async () => (await request.post('v1/barmejli/generate', mode === 'single' ? {prompt, stepCount: 1} : {prompt})).data, setPlan);
   const regenerate = () => plan && action('regenerate', async () => (await request.post(`v1/barmejli/${plan.id}/regenerate`)).data, setPlan);
   const replace = (position: number) => plan && action(`step-${position}`, async () => (await request.post(`v1/barmejli/${plan.id}/steps/${position}/replace`)).data, setPlan);
-  const adapt = () => plan && action('weather', async () => (await request.post(`v1/barmejli/${plan.id}/adapt-weather`)).data, result => result.plan ? setPlan(result.plan) : Alert.alert('Météo stable', 'Votre programme reste adapté.'));
+  const adapt = () => plan && action('weather', async () => (await request.post(`v1/barmejli/${plan.id}/adapt-weather`)).data, result => result.plan ? setPlan(result.plan) : result.unavailable ? Alert.alert('Météo indisponible', 'Impossible de vérifier la météo pour le moment. Réessayez plus tard.') : Alert.alert('Météo stable', 'Votre programme reste adapté.'));
   const save = () => plan && action('save', async () => (await request.patch(`v1/barmejli/${plan.id}/save`)).data, () => {setPlan({...plan, status: 'SAVED'}); Alert.alert('Programme sauvegardé');});
 
+  // Ouvert directement (lien, ancien état de navigation) : rien à dépiler,
+  // on revient alors à l'accueil Expérience.
+  const goBack = () => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('ExperienceHome');
   const canGenerate = busy === null && prompt.trim().length >= 8;
   return <ScrollView style={s.screen} showsVerticalScrollIndicator={false} contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
     {/* Héros de nuit */}
@@ -64,7 +67,7 @@ export default function BarmejliScreen({navigation, route}: any) {
         <Path d="M325 74v10M320 79h10" stroke={night.gold} strokeOpacity={0.6} strokeWidth={1.4} strokeLinecap="round" />
       </Svg>
       <View style={s.topbar}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Retour" onPress={() => navigation.goBack()} style={({pressed}) => [s.back, pressed && s.pressed]}><Icon name="back" color={night.white} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Retour" onPress={goBack} style={({pressed}) => [s.back, pressed && s.pressed]}><Icon name="back" color={night.white} /></Pressable>
         <Text style={s.brand}>BARMEJLI</Text>
         <View style={s.topTag}><Icon name="spark" size={12} color={night.gold} /><Text style={s.topTagText}>VOTRE CONCIERGE</Text></View>
       </View>
@@ -125,8 +128,8 @@ export default function BarmejliScreen({navigation, route}: any) {
           <View style={s.metric}><Text style={s.metricLabel}>TRAJET</Text><Text style={s.totalStrong}>{plan.totals.distanceKm} km</Text></View>
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Vérifier la météo et adapter le programme" onPress={adapt} disabled={busy !== null} style={({pressed}) => [s.weather, pressed && s.pressed]}>
-          <Text style={s.temperature}>{Math.round(plan.weather.temperatureC)}°</Text>
-          <View style={s.grow}><Text style={s.weatherTitle}>{plan.weather.summary}</Text><Text style={s.weatherText}>{plan.weather.precipitationProbability}% de pluie · Adapter la sortie</Text></View>
+          <Text style={s.temperature}>{plan.weather.unavailable ? '–' : `${Math.round(plan.weather.temperatureC)}°`}</Text>
+          <View style={s.grow}><Text style={s.weatherTitle}>{plan.weather.summary}</Text><Text style={s.weatherText}>{plan.weather.unavailable ? 'Prévisions non chargées · Réessayer' : `${plan.weather.precipitationProbability}% de pluie · Adapter la sortie`}</Text></View>
           {busy === 'weather' ? <ActivityIndicator color={night.gold} /> : <Icon name="refresh" size={18} color={night.gold}/>}
         </Pressable>
       </View>
